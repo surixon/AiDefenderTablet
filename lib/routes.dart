@@ -1,3 +1,4 @@
+import 'package:ai_defender_tablet/view/bluetooth_view.dart';
 import 'package:ai_defender_tablet/view/dashboard_view.dart';
 import 'package:ai_defender_tablet/view/downalod_app_view.dart';
 import 'package:ai_defender_tablet/view/login_view.dart';
@@ -66,6 +67,13 @@ final router = GoRouter(
       },
     ),
     GoRoute(
+      path: AppPaths.bluetooth,
+      name: AppPaths.bluetooth,
+      pageBuilder: (context, state) {
+        return const MaterialPage(child: BluetoothView());
+      },
+    ),
+    GoRoute(
       path: AppPaths.settings,
       name: AppPaths.settings,
       pageBuilder: (context, state) {
@@ -96,4 +104,5 @@ class AppPaths {
   static const otp = '/otp';
   static const settings = '/settings';
   static const download = '/download';
+  static const bluetooth = '/bluetooth';
 }

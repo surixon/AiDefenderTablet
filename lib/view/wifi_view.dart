@@ -31,12 +31,9 @@ class WifiViewState extends State<WifiView> {
     return BaseView<WifiProvider>(
         onModelReady: (provider) async {
           _wifiProvider = provider;
-          provider.overlayPermission(context);
-          await provider.checkWifiStatus().then((value) async {
-            await provider.startListeningToScanResults(context);
-          });
-
-          provider.lifeCycleEventHandler();
+          // provider.overlayPermission(context);
+          await provider.checkLocationServices(context);
+          //provider.lifeCycleEventHandler();
         },
         builder: (context, provider, _) => Scaffold(
               backgroundColor: kBgColor,
@@ -75,9 +72,7 @@ class WifiViewState extends State<WifiView> {
         : Icons.signal_wifi_0_bar;
     return GestureDetector(
       onTap: () {
-
-          provider.openWifSetting();
-
+        provider.openWifSetting();
       },
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),

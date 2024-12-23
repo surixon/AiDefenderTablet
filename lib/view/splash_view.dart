@@ -37,7 +37,7 @@ class SplashViewState extends State<SplashView> {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Text(
-              'Patent Pending',
+              'Patented',
               style: ViewDecoration.textStyleMediumUrbanist(kBlackColor, 13),
             ),
           )

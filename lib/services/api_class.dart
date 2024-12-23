@@ -22,10 +22,37 @@ class Api {
       // return MacAddressModel.fromJson(json.decode(response.toString()));
       if (response.statusCode == 200) {
         return response.toString();
-      }else if (response.statusCode == 404) {
+      } else if (response.statusCode == 404) {
         return '';
       } else {
         return '';
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw FetchDataException('');
+      } else {
+        throw const SocketException("Socket Exception");
+      }
+    }
+  }
+
+  Future<MacAddressModel?> getDeviceName(
+    String macAddress,
+  ) async {
+    try {
+      dio.options.headers["Accept"] = ApiConstants.applicationJson;
+      var response = await dio.get(
+          "${ApiConstants.macLookupBaseUrl}/$macAddress",
+          queryParameters: {
+            "apiKey": ApiConstants.apiKey,
+          });
+
+      if (response.statusCode == 200) {
+        return MacAddressModel.fromJson(json.decode(response.toString()));
+      } else if (response.statusCode == 404) {
+        return null;
+      } else {
+        return null;
       }
     } on DioException catch (e) {
       if (e.response != null) {

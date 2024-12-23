@@ -10,7 +10,7 @@ import '../routes.dart';
 import 'base_provider.dart';
 
 class SettingsProvider extends BaseProvider {
-  List<String> list = ['WiFi', 'Logout'];
+  List<String> list = ['Bluetooth','WiFi', 'Logout'];
 
   void logout(BuildContext context) {
 

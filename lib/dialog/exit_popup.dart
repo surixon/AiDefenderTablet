@@ -25,7 +25,7 @@ Future<bool> showExitPopup(context) async {
                           exit(0);
                         },
                         style: ElevatedButton.styleFrom(
-                            primary: Theme.of(context).primaryColor),
+                            backgroundColor: Theme.of(context).primaryColor),
                         child: Text("yes".tr(),
                             style: ViewDecoration.textStyleRegular(
                                 Colors.white, 13.sp)),
@@ -38,7 +38,7 @@ Future<bool> showExitPopup(context) async {
                         Navigator.of(context).pop();
                       },
                       style: ElevatedButton.styleFrom(
-                        primary: Colors.white,
+                        backgroundColor: Colors.white,
                       ),
                       child: Text("no".tr(),
                           style: ViewDecoration.textStyleRegular(

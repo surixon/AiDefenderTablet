@@ -53,10 +53,14 @@ class SettingsViewState extends State<SettingsView> {
       onTap: () {
         switch (index) {
           case 0:
-            context.pushNamed(AppPaths.wifi,extra: {'showBack':'true'});
+            context.pushNamed(AppPaths.bluetooth,extra: {'showBack':'true'});
             break;
 
           case 1:
+            context.pushNamed(AppPaths.wifi,extra: {'showBack':'true'});
+            break;
+
+          case 2:
             provider.logout(context);
             break;
         }

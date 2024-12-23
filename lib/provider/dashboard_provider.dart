@@ -10,6 +10,7 @@ import 'package:ai_defender_tablet/provider/base_provider.dart';
 import 'package:cron/cron.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:lan_scanner/lan_scanner.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -17,13 +18,17 @@ import '../constants/channel_constants.dart';
 import '../globals.dart';
 import 'package:network_tools/network_tools.dart';
 
+import '../helpers/toast_helper.dart';
 import '../locator.dart';
 import '../models/device_model.dart';
+import '../models/mac_address_model.dart';
 import '../notifications/send_notification.dart';
 import '../services/fetch_data_expection.dart';
 
 class DashboardProvider extends BaseProvider {
   SendNotification sendNotification = locator<SendNotification>();
+
+  Map<String, String>? prefixes;
 
   final Set<Host> _hosts = <Host>{};
   final Set<DeviceModel> _devices = <DeviceModel>{};
@@ -34,9 +39,7 @@ class DashboardProvider extends BaseProvider {
   Timer? timer;
   List<dynamic> hideNotification = [];
 
-  bool _newDeviceFounded = false;
-  bool _suspiciousDeviceFounded = false;
-  bool _remoteDeviceFounded = false;
+  List<ScanResult> scanResults = [];
 
   String fcmToken = '';
   bool notifyNewDevice = false;
@@ -57,7 +60,7 @@ class DashboardProvider extends BaseProvider {
   Future<void> scanWifi() async {
     setState(ViewState.busy);
     lastScan = DateTime.now();
-    nextScan = lastScan?.add(const Duration(hours: 1));
+    nextScan = lastScan?.add(const Duration(minutes: 20));
 
     await Globals.userReference
         .doc(Globals.firebaseUser?.uid)
@@ -93,6 +96,9 @@ class DashboardProvider extends BaseProvider {
     _devices.clear();
     _hosts.clear();
     _hosts.addAll(hosts);
+
+    debugPrint("jjj ${hosts.length}");
+
     await Future.forEach(_hosts, (element) async {
       bool isOpen80 = (await PortScannerService.instance
               .isOpen(element.internetAddress.address, 80)) !=
@@ -136,6 +142,9 @@ class DashboardProvider extends BaseProvider {
 
       var macAddress =
           await getMacAddressFromIpAddress(element.internetAddress.host);
+
+      debugPrint("Mac Address $macAddress");
+
       List<int> ports = [isOpen80 ? 80 : 0, isOpen554 ? 554 : 0];
 
       _devices
@@ -153,8 +162,6 @@ class DashboardProvider extends BaseProvider {
       debugPrint(e.message);
     }
   }
-
-
 
   Future<String?> getMacAddressFromIpAddress(String ipAddress) async {
     try {
@@ -200,17 +207,21 @@ class DashboardProvider extends BaseProvider {
     }
     List<String> ipAddresses = [];
     List<Map<String, dynamic>> scanList = [];
+
     await Future.forEach(_devices, (element) async {
-      String? macAddress;
-      if (element.macAddress != null) {
-        macAddress = await getMac(element.macAddress!);
-        debugPrint("Response $macAddress");
+      String? brand;
+      if (element.macAddress != null && element.macAddress!.length>7) {
+        //macAddress = await getMac(element.macAddress!);
+        //debugPrint("Response $macAddress");
+        String macPrefix = element.macAddress!.replaceAll(RegExp(r'[:\-]'), "");
+        brand = prefixes?[macPrefix.substring(0, 6).toUpperCase()];
       }
+
       scanList.add({
         'ports': element.ports,
         'ip': element.ip,
         'macAddress': element.macAddress,
-        'brand': macAddress
+        'brand': brand
       });
       ipAddresses.add(element.ip ?? '');
 
@@ -225,56 +236,36 @@ class DashboardProvider extends BaseProvider {
     SharedPref.prefs
         ?.setString(SharedPref.oldIpAddresses, json.encode(ipAddresses));
 
+    List<dynamic> bluetoothScanList = [];
+
+    await Future.forEach(scanResults, (bluetooth) async {
+      String macPrefix =
+          bluetooth.device.remoteId.str.replaceAll(RegExp(r'[:\-]'), "");
+
+      String? companyName = prefixes?[macPrefix.substring(0, 6).toUpperCase()];
+
+      bluetoothScanList.add({
+        'rssi': bluetooth.rssi,
+        'device': (companyName == null) ? 'Genric' : companyName,
+        'name': bluetooth.device.remoteId.str,
+        'txPowerLevel': bluetooth.advertisementData.txPowerLevel,
+        'appearance':
+            '0x${bluetooth.advertisementData.appearance?.toRadixString(16)}',
+        'manufacturer':
+            getNiceManufacturerData(bluetooth.advertisementData.msd),
+      });
+    });
+
     var request = {
       'dateTime': DateTime.now(),
       'uid': Globals.firebaseUser?.uid,
       'scan': scanList,
+      'bluetoothScan': bluetoothScanList,
       'dateOnly':
           CommonFunction.getDateFromTimeStamp(DateTime.now(), 'yyyyMMdd')
     };
     await Globals.scanReference.doc().set(request);
-
-    /*await Globals.userReference
-        .doc(Globals.firebaseUser?.uid)
-        .get()
-        .then((value) async {
-      Map<String, dynamic> userDetails = value.data() as Map<String, dynamic>;
-
-      if (userDetails['fcm'] != null && userDetails['notify'] != null) {
-        if (_newDeviceFounded &&  userDetails['notify']['newDevice']) {
-          await sendNotification.sendNotification('new_device', 'Ai Defender',
-              "New Device Found", userDetails['fcm']);
-          _newDeviceFounded = false;
-        }
-
-        if (_suspiciousDeviceFounded &&  userDetails['notify']['suspicious']) {
-          await sendNotification.sendNotification('suspicious_device',
-              'Ai Defender', "Suspicious Device Found", userDetails['fcm']);
-          _suspiciousDeviceFounded = false;
-        }
-
-        if (_remoteDeviceFounded &&  userDetails['notify']['remote']) {
-          await sendNotification.sendNotification(
-              'remote_device',
-              'Ai Defender',
-              "Remote Accessible Device Found",
-              userDetails['fcm']);
-          _remoteDeviceFounded = false;
-        }
-      }
-
-    });*/
   }
-
-/*  Future<void> getAiDefender() async {
-    Globals.aiDefenderReference.get().then((value) async {
-      await Future.forEach(value.docs, (element) {
-        var model = AiDefenderModel.fromSnapshot(element.data());
-        model.ID = element.id;
-        aiDefenderList.add(model);
-      });
-    });
-  }*/
 
   Future<void> updateWifiName() async {
     WakelockPlus.enable();
@@ -285,9 +276,11 @@ class DashboardProvider extends BaseProvider {
   }
 
   startCron() {
-    timer = Timer.periodic(const Duration(minutes: 10), (timer) async {
-      await scanWifi().then((value) async {
-        await uploadData();
+    timer = Timer.periodic(const Duration(minutes: 20), (timer) async {
+      await onScanPressed().then((_) async {
+        await scanWifi().then((value) async {
+          await uploadData();
+        });
       });
     });
   }
@@ -297,5 +290,53 @@ class DashboardProvider extends BaseProvider {
     Globals.userReference
         .doc(Globals.firebaseUser?.uid)
         .update({'lastScan': lastScan, 'nextScan': null, 'isScan': false});
+  }
+
+  String getNiceHexArray(List<int> bytes) {
+    return '[${bytes.map((i) => i.toRadixString(16).padLeft(2, '0')).join(', ')}]';
+  }
+
+  String getNiceManufacturerData(List<List<int>> data) {
+    return data
+        .map((val) => '${getNiceHexArray(val)}')
+        .join(', ')
+        .toUpperCase();
+  }
+
+  String getNiceServiceData(Map<Guid, List<int>> data) {
+    return data.entries
+        .map((v) => '${v.key}: ${getNiceHexArray(v.value)}')
+        .join(', ')
+        .toUpperCase();
+  }
+
+  String getNiceServiceUuids(List<Guid> serviceUuids) {
+    return serviceUuids.join(', ').toUpperCase();
+  }
+
+  Future onScanPressed() async {
+    try {
+      await FlutterBluePlus.startScan(timeout: const Duration(seconds: 15));
+    } catch (e) {
+      ToastHelper.showErrorMessage("Start Scan Error: $e");
+    }
+  }
+
+  Future<void> getLocationName() async {
+    await Globals.userReference
+        .doc(Globals.firebaseUser?.uid)
+        .get()
+        .then((snapshot) {
+      if (snapshot.data() != null) {
+        location = snapshot.data()?['location'] ?? '';
+      }
+    });
+  }
+
+  // Load the JSON file and decode it into a Map
+  Future<void> loadJson() async {
+    final String jsonString =
+        await rootBundle.loadString('assets/json/mac_prefixes.json');
+    prefixes = Map<String, String>.from(json.decode(jsonString));
   }
 }

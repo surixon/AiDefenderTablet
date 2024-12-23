@@ -1,10 +1,13 @@
 import 'dart:async';
 
 import 'package:ai_defender_tablet/enums/viewstate.dart';
+import 'package:ai_defender_tablet/helpers/common_function.dart';
 import 'package:ai_defender_tablet/provider/base_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:wifi_iot/wifi_iot.dart';
 import 'package:wifi_scan/wifi_scan.dart';
 
@@ -52,7 +55,7 @@ class WifiProvider extends BaseProvider {
   Future<bool> _canGetScannedResults(BuildContext context) async {
     if (shouldCheckCan) {
       // check if can-getScannedResults
-      final can = await WiFiScan.instance.canGetScannedResults();
+      final can = await WiFiScan.instance.canGetScannedResults(askPermissions: true);
       // if can-not, then show error
       if (can != CanGetScannedResults.yes) {
         ToastHelper.showErrorMessage("Cannot get scanned results: $can");
@@ -89,7 +92,6 @@ class WifiProvider extends BaseProvider {
   }
 
   Future<void> openWifSetting() async {
-
     await WiFiForIoTPlugin.setEnabled(isEnabled, shouldOpenSettings: true);
   }
 
@@ -99,13 +101,11 @@ class WifiProvider extends BaseProvider {
   }
 
   void lifeCycleEventHandler() {
-
     WidgetsBinding.instance
         .addObserver(LifecycleEventHandler(resumeCallBack: () async {
-          if(subscription!=null){
-            await checkWifiStatus();
-          }
-
+      if (subscription != null) {
+        await checkWifiStatus();
+      }
     }));
   }
 
@@ -114,6 +114,38 @@ class WifiProvider extends BaseProvider {
       ChannelConstants.platform.invokeMethod('overlayPermission');
     } on PlatformException catch (e) {
       debugPrint(e.message);
+    }
+  }
+
+  Future<void> checkLocationServices(BuildContext context) async {
+    await Geolocator.isLocationServiceEnabled().then((isServiceEnabled) async {
+      if (!isServiceEnabled) {
+        CommonFunction.showEnableLocationDialog(context).then((_){
+          checkLocationServices(context);
+        });
+      }else{
+       await checkLocationPermissions(context);
+      }
+    });
+  }
+
+  Future<void> checkLocationPermissions(BuildContext context) async {
+
+
+    var permissionGranted = await Permission.location.status;
+    if (permissionGranted == PermissionStatus.denied) {
+      permissionGranted=  await Permission.location.request();
+       if (permissionGranted != PermissionStatus.granted) {
+         ToastHelper.showErrorMessage("Permission Denied!");
+       } else {
+         await checkWifiStatus().then((value) async {
+           await startListeningToScanResults(context);
+         });
+       }
+    } else {
+      await checkWifiStatus().then((value) async {
+        await startListeningToScanResults(context);
+      });
     }
   }
 }

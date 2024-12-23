@@ -129,17 +129,21 @@ class MainActivity : FlutterActivity() {
 
     private fun getDeviceMacAddress(ipAddress: String?): String {
         try {
-            val localIP = InetAddress.getByName(ipAddress)
-            val networkInterface = NetworkInterface.getByInetAddress(localIP) ?: return ""
-            val hardwareAddress = networkInterface.hardwareAddress ?: return ""
-            val stringBuilder = StringBuilder(18)
-            for (b in hardwareAddress) {
-                if (stringBuilder.isNotEmpty()) {
-                    stringBuilder.append(":")
+            val address = InetAddress.getByName(ipAddress)
+            val networkInterface = NetworkInterface.getByInetAddress(address)
+            if (networkInterface != null) {
+                val macBytes = networkInterface.hardwareAddress
+                if (macBytes != null) {
+                    val macAddress = StringBuilder()
+                    for (b in macBytes) {
+                        macAddress.append(String.format("%02X:", b))
+                    }
+                    if (macAddress.isNotEmpty()) {
+                        macAddress.deleteCharAt(macAddress.length - 1) // Remove trailing colon
+                    }
+                    return macAddress.toString()
                 }
-                stringBuilder.append(String.format("%02x", b))
             }
-            return stringBuilder.toString()
         } catch (e: java.lang.Exception) {
             e.printStackTrace()
         }
