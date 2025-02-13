@@ -20,6 +20,9 @@ jobs:
       - name: Enable Flutter Linux Desktop
         run: flutter config --enable-linux-desktop
 
+      - name: Create Linux Desktop Files (if missing)
+        run: flutter create --platforms=linux .
+
       - name: Get Flutter Dependencies
         run: flutter pub get
 
