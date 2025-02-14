@@ -1,9 +1,9 @@
-name: Build Flutter for Linux
+name: Build Flutter for Raspberry Pi 5 (Linux ARM64)
 
 on: [push, pull_request]
 
 jobs:
-  build-linux:
+  build-linux-arm:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -23,14 +23,17 @@ jobs:
       - name: Create Linux Desktop Files (if missing)
         run: flutter create --platforms=linux .
 
-      - name: Get Flutter Dependencies
-        run: flutter pub get
+      - name: Install ARM64 Cross-Compiler
+        run: sudo apt install g++-aarch64-linux-gnu -y
 
-      - name: Build Linux App
-        run: flutter build linux
+      - name: Build for ARM64 (Raspberry Pi 5)
+        run: |
+          export CC=aarch64-linux-gnu-gcc
+          export CXX=aarch64-linux-gnu-g++
+          flutter build linux --release --target-platform linux-arm64
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: linux-build
-          path: build/linux/x64/release/bundle/
+          name: linux-arm64-build
+          path: build/linux/arm64/release/bundle/
