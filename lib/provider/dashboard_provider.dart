@@ -214,8 +214,11 @@ class DashboardProvider extends BaseProvider {
       if (!hideNotification.contains(element.ip) &&
           !oldIpAddresses.contains(element.ip) &&
           notifyNewDevice) {
-        sendNotification.sendNotification('new_device', 'Ai Defender',
-            "New Device Found (${element.ip})", fcmToken);
+        sendNotification.sendNotification(
+            'new_device',
+            'Ai Defender',
+            "New${_getDeviceName(element.ports)}Device Found (${element.ip})",
+            fcmToken);
       }
     });
 
@@ -552,5 +555,21 @@ class DashboardProvider extends BaseProvider {
     double distanceInMeters =
         pow(10, (txPower - rssi) / (10 * pathLossExponent)).toDouble();
     return distanceInMeters * 3.28084; // Convert meters to feet
+  }
+
+  String _getDeviceName(List<int> ports) {
+    if (ports[1] != 0 && ports[0] == 0) {
+      return ' Suspicious ';
+    }
+
+    if (ports[0] != 0 && ports[1] == 0) {
+      return ' Remote Accessible ';
+    }
+
+    if (ports[0] == 0 && ports[1] == 0) {
+      return ' Remote Accessible ';
+    }
+
+    return " ";
   }
 }
