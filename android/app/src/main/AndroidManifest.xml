@@ -15,6 +15,7 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
 
+
     <!-- Allow Bluetooth -->
     <uses-feature
         android:name="android.hardware.bluetooth_le"
@@ -62,7 +63,6 @@
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.HOME" />
@@ -71,6 +71,7 @@
 
         <receiver
             android:name="com.example.ai_defender_tablet.receiver.StartOnBootReceiver"
+            android:enabled="true"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -83,5 +84,9 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <meta-data
+            android:name="com.google.firebase.auth.api.gmsconfig"
+            android:resource="@xml/firebase_auth_config" />
     </application>
 </manifest>

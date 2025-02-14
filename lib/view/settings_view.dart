@@ -30,8 +30,8 @@ class SettingsViewState extends State<SettingsView> {
               body: Stack(
                 children: [
                   ListView.separated(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 24.w, vertical: 20.h),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 20),
                       itemBuilder: (context, index) =>
                           _itemBuilder(context, index, provider),
                       separatorBuilder: (context, index) {
@@ -53,14 +53,18 @@ class SettingsViewState extends State<SettingsView> {
       onTap: () {
         switch (index) {
           case 0:
-            context.pushNamed(AppPaths.bluetooth,extra: {'showBack':'true'});
+            context.pushNamed(AppPaths.locations);
             break;
 
           case 1:
-            context.pushNamed(AppPaths.wifi,extra: {'showBack':'true'});
+            context.pushNamed(AppPaths.bluetooth, extra: {'showBack': 'true'});
             break;
 
           case 2:
+            context.pushNamed(AppPaths.wifi, extra: {'showBack': 'true'});
+            break;
+
+          case 3:
             provider.logout(context);
             break;
         }
@@ -70,7 +74,7 @@ class SettingsViewState extends State<SettingsView> {
         padding: EdgeInsets.symmetric(vertical: 12.h),
         child: Text(
           provider.list[index],
-          style: ViewDecoration.textStyleMediumUrbanist(kBlackColor, 20.sp),
+          style: ViewDecoration.textStyleMediumUrbanist(kBlackColor, 20),
         ),
       ),
     );

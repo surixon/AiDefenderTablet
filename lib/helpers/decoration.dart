@@ -12,7 +12,7 @@ class ViewDecoration {
       errorMaxLines: 2,
       contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
       hintText: hintText,
-      hintStyle: ViewDecoration.textStyleMedium(kColor838BA1, 20.sp),
+      hintStyle: ViewDecoration.textStyleMedium(kColor838BA1, 20),
       border: outlineInputBorder(),
       focusedBorder: outlineInputBorder(),
       enabledBorder: outlineInputBorder(),

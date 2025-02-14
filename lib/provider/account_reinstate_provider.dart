@@ -17,7 +17,7 @@ class AccountReInStateProvider extends BaseProvider {
   }
 
   Future<void> updateFcmToken(String? fcmToken) async {
-    Map<String, dynamic> data = {'fcm': fcmToken, 'isDeleted': false};
+    Map<String, dynamic> data = { 'isDeleted': false};
     await Globals.userReference.doc(Globals.firebaseUser?.uid).update(data);
     await Globals.deletedUserReference.doc(Globals.firebaseUser?.uid).delete();
   }

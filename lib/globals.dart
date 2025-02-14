@@ -11,6 +11,8 @@ class Globals {
 
   static final userReference = fireStore.collection("users");
 
+  static final locationReference = fireStore.collection("locations");
+
   static final notificationsReference = fireStore.collection("notifications");
 
   static final deletedUserReference = fireStore.collection("deletedUser");

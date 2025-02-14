@@ -99,18 +99,13 @@ class OtpProvider extends BaseProvider{
                 filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
                 child: AccountReInstateView(model, fcmToken),
               ));
-        } else {
-          await updateFcmToken(fcmToken);
         }
       } else {
-        Map<String, dynamic> data = {'fcm': fcmToken};
+        Map<String, dynamic> data = {'createdAt': DateTime.now()};
         await Globals.userReference.doc(Globals.firebaseUser?.uid).set(data);
       }
     });
   }
 
-  Future<void> updateFcmToken(String? fcmToken) async {
-    Map<String, dynamic> data = {'fcm': fcmToken};
-    await Globals.userReference.doc(Globals.firebaseUser?.uid).update(data);
-  }
+
 }

@@ -45,8 +45,8 @@ class PrimaryButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onPressed,
         style: ButtonStyle(
-          backgroundColor: MaterialStateProperty.all(color ?? kPrimaryColor),
-          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+          backgroundColor: WidgetStateProperty.all(color ?? kPrimaryColor),
+          shape: WidgetStateProperty.all<RoundedRectangleBorder>(
               RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(radius)),
           )),
@@ -68,7 +68,7 @@ class PrimaryButton extends StatelessWidget {
                       title,
                       textAlign: TextAlign.center,
                       style: ViewDecoration.textStyleSemiBold(
-                          textColor, fontSize ?? 26.sp),
+                          textColor, fontSize ?? 20),
                     ),
                   ),
                 ],
@@ -77,7 +77,7 @@ class PrimaryButton extends StatelessWidget {
                 title,
                 textAlign: TextAlign.center,
                 style: ViewDecoration.textStyleSemiBold(
-                    textColor, fontSize ?? 26.sp),
+                    textColor, fontSize ?? 20),
               ),
       ),
     );

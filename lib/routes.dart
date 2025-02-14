@@ -1,3 +1,5 @@
+import 'package:ai_defender_tablet/view/add_edit_location_view.dart';
+import 'package:ai_defender_tablet/view/location_view.dart';
 import 'package:ai_defender_tablet/view/bluetooth_view.dart';
 import 'package:ai_defender_tablet/view/dashboard_view.dart';
 import 'package:ai_defender_tablet/view/downalod_app_view.dart';
@@ -80,6 +82,25 @@ final router = GoRouter(
         return const MaterialPage(child: SettingsView());
       },
     ),
+    GoRoute(
+      path: AppPaths.addLocationView,
+      name: AppPaths.addLocationView,
+      pageBuilder: (context, state) {
+        Map<String, dynamic>? data = state.extra as Map<String, dynamic>?;
+        return MaterialPage(
+            child: AddEditLocationView(
+          id: data?['id'],
+          locationName: data?['locationName'],
+        ));
+      },
+    ),
+    GoRoute(
+      path: AppPaths.locations,
+      name: AppPaths.locations,
+      pageBuilder: (context, state) {
+        return const MaterialPage(child: LocationView());
+      },
+    ),
   ],
   errorBuilder: (context, state) {
     return Scaffold(
@@ -105,4 +126,6 @@ class AppPaths {
   static const settings = '/settings';
   static const download = '/download';
   static const bluetooth = '/bluetooth';
+  static const addLocationView = '/addLocationView';
+  static const locations = '/locations';
 }

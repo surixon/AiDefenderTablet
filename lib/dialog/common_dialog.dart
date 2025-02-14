@@ -67,9 +67,9 @@ class CommonDialogState extends State<CommonDialog> {
                                 context.pop(true);
                               },
                               style: ButtonStyle(
-                                backgroundColor: MaterialStateProperty.all(
+                                backgroundColor: WidgetStateProperty.all(
                                     Colors.transparent),
-                                shadowColor: MaterialStateProperty.all(
+                                shadowColor: WidgetStateProperty.all(
                                     Colors.transparent),
                               ),
                               child: Text(
@@ -98,9 +98,9 @@ class CommonDialogState extends State<CommonDialog> {
                                 context.pop();
                               },
                               style: ButtonStyle(
-                                backgroundColor: MaterialStateProperty.all(
+                                backgroundColor: WidgetStateProperty.all(
                                     Colors.transparent),
-                                shadowColor: MaterialStateProperty.all(
+                                shadowColor: WidgetStateProperty.all(
                                     Colors.transparent),
                               ),
                               child: Text(

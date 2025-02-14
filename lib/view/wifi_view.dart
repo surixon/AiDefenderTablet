@@ -82,7 +82,7 @@ class WifiViewState extends State<WifiView> {
         ),
         child: Row(
           children: [
-            Icon(signalIcon),
+            Icon(signalIcon,size: 32,),
             SizedBox(
               width: 16.w,
             ),
@@ -94,7 +94,7 @@ class WifiViewState extends State<WifiView> {
                     accessPoint.ssid.isNotEmpty
                         ? accessPoint.ssid
                         : "**EMPTY**",
-                    style: ViewDecoration.textStyleBold(kBlackColor, 20.sp),
+                    style: ViewDecoration.textStyleBold(kBlackColor, 20),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -104,7 +104,7 @@ class WifiViewState extends State<WifiView> {
                   Text(
                     accessPoint.capabilities,
                     style: ViewDecoration.textStyleRegular(
-                        kBlackColor.withOpacity(.5), 16.sp),
+                        kBlackColor.withOpacity(.5), 16),
                   ),
                 ],
               ),
@@ -117,7 +117,7 @@ class WifiViewState extends State<WifiView> {
                       ),
                       Text('Connected',
                           style: ViewDecoration.textStyleSemiBold(
-                              Colors.green, 18.sp))
+                              Colors.green, 18))
                     ],
                   )
                 : const SizedBox(),
@@ -126,6 +126,7 @@ class WifiViewState extends State<WifiView> {
             ),
             const ImageView(
               path: settings,
+              width: 24,
             ),
           ],
         ),

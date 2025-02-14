@@ -1,33 +1,41 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-
+import 'dart:math';
 import 'package:ai_defender_tablet/enums/viewstate.dart';
 import 'package:ai_defender_tablet/helpers/common_function.dart';
 import 'package:ai_defender_tablet/helpers/shared_pref.dart';
+import 'package:ai_defender_tablet/helpers/toast_helper.dart';
 import 'package:ai_defender_tablet/models/ai_defender_model.dart';
 import 'package:ai_defender_tablet/provider/base_provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cron/cron.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:lan_scanner/lan_scanner.dart';
 import 'package:network_info_plus/network_info_plus.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
 import '../constants/channel_constants.dart';
 import '../globals.dart';
 import 'package:network_tools/network_tools.dart';
-
-import '../helpers/toast_helper.dart';
 import '../locator.dart';
 import '../models/device_model.dart';
-import '../models/mac_address_model.dart';
 import '../notifications/send_notification.dart';
 import '../services/fetch_data_expection.dart';
 
 class DashboardProvider extends BaseProvider {
-  SendNotification sendNotification = locator<SendNotification>();
+  bool _loader = true;
 
+  bool get loader => _loader;
+
+  set loader(bool value) {
+    _loader = value;
+    notifyListeners();
+  }
+
+  SendNotification sendNotification = locator<SendNotification>();
   Map<String, String>? prefixes;
 
   final Set<Host> _hosts = <Host>{};
@@ -35,20 +43,23 @@ class DashboardProvider extends BaseProvider {
   List<AiDefenderModel> aiDefenderList = [];
   DateTime? lastScan;
   DateTime? nextScan;
-  final cron = Cron();
+  final Cron cron = Cron();
   Timer? timer;
   List<dynamic> hideNotification = [];
-
   List<ScanResult> scanResults = [];
 
   String fcmToken = '';
   bool notifyNewDevice = false;
   bool notifySuspiciousDevice = false;
   bool notifyRemoteDevice = false;
+  bool btScan = true;
+  bool wifiScan = true;
 
-  String location = '';
+  List<QueryDocumentSnapshot<Map<String, dynamic>>?> locationList = [];
 
-  bool _isScanning = true;
+  String? selectedLocation;
+
+  bool _isScanning = false;
 
   bool get isScanning => _isScanning;
 
@@ -57,37 +68,16 @@ class DashboardProvider extends BaseProvider {
     notifyListeners();
   }
 
-  Future<void> scanWifi() async {
+  Future<void> startWifiScan() async {
     setState(ViewState.busy);
     lastScan = DateTime.now();
     nextScan = lastScan?.add(const Duration(minutes: 20));
 
-    await Globals.userReference
-        .doc(Globals.firebaseUser?.uid)
-        .get()
-        .then((value) {
-      Map<String, dynamic> userDetails = value.data() as Map<String, dynamic>;
-
-      hideNotification = userDetails['hideNotification'] ?? [];
-      fcmToken = userDetails['fcm'];
-
-      if (userDetails['notify'] != null) {
-        notifyNewDevice = userDetails['notify']['newDevice'];
-        notifySuspiciousDevice = userDetails['notify']['suspicious'];
-        notifyRemoteDevice = userDetails['notify']['remote'];
-      }
-    });
-
-    Globals.userReference.doc(Globals.firebaseUser?.uid).update({
-      'location': location,
+    await Globals.locationReference.doc(selectedLocation).update({
       'lastScan': lastScan,
       'nextScan': nextScan,
       'isScan': true
-    });
-
-    /*if (aiDefenderList.isEmpty) {
-      await getAiDefender();
-    }*/
+    }).then((value) {});
 
     final scanner = LanScanner(debugLogging: true);
     final hosts = await scanner.quickIcmpScanAsync(
@@ -96,8 +86,6 @@ class DashboardProvider extends BaseProvider {
     _devices.clear();
     _hosts.clear();
     _hosts.addAll(hosts);
-
-    debugPrint("jjj ${hosts.length}");
 
     await Future.forEach(_hosts, (element) async {
       bool isOpen80 = (await PortScannerService.instance
@@ -142,8 +130,6 @@ class DashboardProvider extends BaseProvider {
 
       var macAddress =
           await getMacAddressFromIpAddress(element.internetAddress.host);
-
-      debugPrint("Mac Address $macAddress");
 
       List<int> ports = [isOpen80 ? 80 : 0, isOpen554 ? 554 : 0];
 
@@ -210,7 +196,7 @@ class DashboardProvider extends BaseProvider {
 
     await Future.forEach(_devices, (element) async {
       String? brand;
-      if (element.macAddress != null && element.macAddress!.length>7) {
+      if (element.macAddress != null && element.macAddress!.length > 7) {
         //macAddress = await getMac(element.macAddress!);
         //debugPrint("Response $macAddress");
         String macPrefix = element.macAddress!.replaceAll(RegExp(r'[:\-]'), "");
@@ -247,6 +233,7 @@ class DashboardProvider extends BaseProvider {
       bluetoothScanList.add({
         'rssi': bluetooth.rssi,
         'device': (companyName == null) ? 'Genric' : companyName,
+        'bluetoothName': bluetooth.device.platformName,
         'name': bluetooth.device.remoteId.str,
         'txPowerLevel': bluetooth.advertisementData.txPowerLevel,
         'appearance':
@@ -260,6 +247,7 @@ class DashboardProvider extends BaseProvider {
       'dateTime': DateTime.now(),
       'uid': Globals.firebaseUser?.uid,
       'scan': scanList,
+      'locationId': selectedLocation,
       'bluetoothScan': bluetoothScanList,
       'dateOnly':
           CommonFunction.getDateFromTimeStamp(DateTime.now(), 'yyyyMMdd')
@@ -267,29 +255,87 @@ class DashboardProvider extends BaseProvider {
     await Globals.scanReference.doc().set(request);
   }
 
-  Future<void> updateWifiName() async {
-    WakelockPlus.enable();
-    final wifiName = await NetworkInfo().getWifiName();
-    Globals.userReference
-        .doc(Globals.firebaseUser?.uid)
-        .update({'wifiName': wifiName});
-  }
+  /*Future<void> updateWifiName() async {
 
-  startCron() {
-    timer = Timer.periodic(const Duration(minutes: 20), (timer) async {
-      await onScanPressed().then((_) async {
-        await scanWifi().then((value) async {
+
+    await NetworkInfo().getWifiName().then((wifiName) async {
+      debugPrint("Wifi Name $wifiName");
+      debugPrint("User ID ${Globals.firebaseUser?.uid}");
+      await Globals.userReference
+          .doc(Globals.firebaseUser?.uid)
+          .update({'wifiName': wifiName});
+      debugPrint("Date Uploaded ${Globals.firebaseUser?.uid}");
+    });
+  }*/
+
+  startCron() async {
+    var bluetoothAdapterState = await FlutterBluePlus.adapterState.first;
+    if (btScan &&
+        !wifiScan &&
+        bluetoothAdapterState == BluetoothAdapterState.on) {
+      await startBluetoothScan().then((_) async {
+        await uploadData();
+      });
+    }
+
+    if (!btScan && wifiScan) {
+      scanResults.clear();
+      await startWifiScan().then((value) async {
+        await uploadData();
+      });
+    }
+
+    if (btScan && wifiScan) {
+      await startBluetoothScan().then((_) async {
+        await startWifiScan().then((_) async {
           await uploadData();
         });
+      });
+    }
+
+    debugPrint("btScan $btScan");
+    if (btScan) {
+      checkIsBluetoothDeviceWithIn3Feet();
+    }
+
+    timer = Timer.periodic(const Duration(minutes: 20), (timer) async {
+      await getUserDetails().then((_) async {
+        if (btScan &&
+            !wifiScan &&
+            bluetoothAdapterState == BluetoothAdapterState.on) {
+          await startBluetoothScan().then((_) async {
+            await uploadData();
+          });
+        }
+
+        if (!btScan && wifiScan) {
+          await startWifiScan().then((value) async {
+            await uploadData();
+          });
+        }
+
+        if (btScan && wifiScan) {
+          await startBluetoothScan().then((_) async {
+            await startWifiScan().then((_) async {
+              await uploadData();
+            });
+          });
+        }
+
+        if (btScan) {
+          checkIsBluetoothDeviceWithIn3Feet();
+        }
       });
     });
   }
 
   stopCron() async {
     timer?.cancel();
-    Globals.userReference
-        .doc(Globals.firebaseUser?.uid)
-        .update({'lastScan': lastScan, 'nextScan': null, 'isScan': false});
+    isScanning = false;
+    await Globals.locationReference
+        .doc(selectedLocation)
+        .update({'lastScan': lastScan, 'nextScan': null, 'isScan': false}).then(
+            (value) {});
   }
 
   String getNiceHexArray(List<int> bytes) {
@@ -297,10 +343,7 @@ class DashboardProvider extends BaseProvider {
   }
 
   String getNiceManufacturerData(List<List<int>> data) {
-    return data
-        .map((val) => '${getNiceHexArray(val)}')
-        .join(', ')
-        .toUpperCase();
+    return data.map((val) => getNiceHexArray(val)).join(', ').toUpperCase();
   }
 
   String getNiceServiceData(Map<Guid, List<int>> data) {
@@ -314,23 +357,41 @@ class DashboardProvider extends BaseProvider {
     return serviceUuids.join(', ').toUpperCase();
   }
 
-  Future onScanPressed() async {
+  Future startBluetoothScan() async {
     try {
       await FlutterBluePlus.startScan(timeout: const Duration(seconds: 15));
     } catch (e) {
-      ToastHelper.showErrorMessage("Start Scan Error: $e");
+      debugPrint("Start Scan Error: $e");
     }
   }
 
   Future<void> getLocationName() async {
-    await Globals.userReference
-        .doc(Globals.firebaseUser?.uid)
+    String deviceId = await CommonFunction.getDeviceId();
+
+    await Globals.locationReference
+        .where('userId', isEqualTo: Globals.firebaseUser?.uid)
         .get()
         .then((snapshot) {
-      if (snapshot.data() != null) {
-        location = snapshot.data()?['location'] ?? '';
+      if (snapshot.docs.isNotEmpty) {
+        locationList.clear();
+        locationList.addAll(snapshot.docs);
+
+        var selectedData = locationList
+            .where((e) => (e?.data()['deviceIds'] != null &&
+                e?.data()['deviceIds'].contains(deviceId)))
+            .toList();
+        if (selectedData.isNotEmpty) {
+          selectedLocation = selectedData.first?.id;
+        }
+      } else {
+        selectedLocation = null;
+        if (isScanning) {
+          stopCron();
+        }
       }
     });
+
+    loader = false;
   }
 
   // Load the JSON file and decode it into a Map
@@ -338,5 +399,158 @@ class DashboardProvider extends BaseProvider {
     final String jsonString =
         await rootBundle.loadString('assets/json/mac_prefixes.json');
     prefixes = Map<String, String>.from(json.decode(jsonString));
+  }
+
+  Future<void> updateLocation() async {
+    String deviceId = await CommonFunction.getDeviceId();
+
+    await Globals.locationReference
+        .where('userId', isEqualTo: Globals.auth.currentUser?.uid)
+        .where('deviceIds', arrayContainsAny: [deviceId])
+        .get()
+        .then((snapshot) async {
+          if (snapshot.docs.isNotEmpty) {
+            await Globals.locationReference.doc(snapshot.docs.first.id).update({
+              "deviceIds": FieldValue.arrayRemove([deviceId])
+            });
+          }
+          await Globals.locationReference.doc(selectedLocation).update({
+            "deviceIds": FieldValue.arrayUnion([deviceId])
+          });
+        });
+  }
+
+  Future<void> getUserDetails() async {
+    await Globals.userReference
+        .doc(Globals.firebaseUser?.uid)
+        .get()
+        .then((value) {
+      Map<String, dynamic> userDetails = value.data() as Map<String, dynamic>;
+
+      hideNotification = userDetails['hideNotification'] ?? [];
+      fcmToken = userDetails['fcm'];
+
+      debugPrint("Token $fcmToken");
+
+      if (userDetails['notify'] != null) {
+        notifyNewDevice = userDetails['notify']['newDevice'];
+        notifySuspiciousDevice = userDetails['notify']['suspicious'];
+        notifyRemoteDevice = userDetails['notify']['remote'];
+      }
+      if (userDetails['scanSettings'] != null) {
+        btScan = userDetails['scanSettings']['bluetooth'];
+        wifiScan = userDetails['scanSettings']['wifi'];
+      }
+    });
+  }
+
+  Future<void> startScanning(BuildContext context) async {
+    isScanning = true;
+
+    final bool isConnected =
+        await InternetConnectionChecker.instance.hasConnection;
+    if (isConnected) {
+      await getUserDetails().then((_) async {
+        //if (btScan) {
+        final bluetoothAdapterState = await FlutterBluePlus.adapterState.first;
+        if (await FlutterBluePlus.isSupported &&
+            bluetoothAdapterState != BluetoothAdapterState.on) {
+          await showBluetoothDialog(context);
+        }
+        // }
+        await startCron();
+      });
+    } else {
+      isScanning = false;
+      ToastHelper.showErrorMessage('Device is not connected to the internet');
+    }
+  }
+
+  Future<void> showBluetoothDialog(BuildContext context) async {
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Bluetooth Required'),
+        content:
+            const Text('Please turn on Bluetooth to continue using this app.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              await FlutterBluePlus.turnOn(); // Request to enable Bluetooth
+              Navigator.pop(context); // Close dialog
+            },
+            child: const Text('Turn On'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> checkIsBluetoothDeviceWithIn3Feet() async {
+    List<String> deviceWithIn3Feet = [];
+    await Globals.scanReference
+        .where('uid', isEqualTo: Globals.firebaseUser?.uid)
+        .where('locationId', isEqualTo: selectedLocation)
+        .where('bluetoothScan', isNotEqualTo: null)
+        .where('dateTime',
+            isGreaterThan: Timestamp.fromDate(
+                DateTime.now().subtract(const Duration(hours: 2))))
+        .orderBy('dateTime', descending: true)
+        .get()
+        .then((snapshot) async {
+      debugPrint("snapshot length ${snapshot.docs.length}");
+
+      if (snapshot.docs.length < 6) {
+        return;
+      }
+
+      await Future.forEach(snapshot.docs, (doc) async {
+        List<String> devices = [];
+        await Future.forEach(doc.data()["bluetoothScan"], (dynamic device) {
+          double distanceInFeet = calculateDistance(device['rssi'],
+              txPower: -59, pathLossExponent: 2.5);
+          if (distanceInFeet <= 3.0) {
+            devices.add(device['name']);
+          }
+        });
+
+        if (deviceWithIn3Feet.isEmpty) {
+          deviceWithIn3Feet.addAll(devices);
+        } else {
+          deviceWithIn3Feet.retainWhere((item) => devices.contains(item));
+          debugPrint("Updated List deviceWithIn3Feet: $deviceWithIn3Feet");
+        }
+      });
+
+      deviceWithIn3Feet.retainWhere((item) => hideNotification.contains(item));
+
+      if (deviceWithIn3Feet.isNotEmpty) {
+        List<String> btDevices = [];
+
+        await Future.forEach(deviceWithIn3Feet, (macAddress) {
+          String macPrefix = macAddress.replaceAll(RegExp(r'[:\-]'), "");
+          btDevices.add(
+              prefixes?[macPrefix.substring(0, 6).toUpperCase()] ?? macAddress);
+        });
+
+        await sendNotification.sendNotification('bt_device', 'Ai Defender',
+            "BT $deviceWithIn3Feet in range more than 2 hours", fcmToken);
+      }
+    });
+  }
+
+  double calculateDistance(int rssi,
+      {double txPower = -59, double pathLossExponent = 2.0}) {
+    // txPower: RSSI at 1 meter (default is -59)
+    // pathLossExponent: Environmental factor (default is 2.0 for free space)
+    double distanceInMeters =
+        pow(10, (txPower - rssi) / (10 * pathLossExponent)).toDouble();
+    return distanceInMeters * 3.28084; // Convert meters to feet
   }
 }

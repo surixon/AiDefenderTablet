@@ -1,0 +1,4 @@
+<resources>
+    <!-- Add your Firebase Web Client ID -->
+    <string name="default_web_client_id">AIzaSyBk-jU6WIBRfF4Cs0AigNu8M2Z9nsdTeuU</string>
+</resources>
