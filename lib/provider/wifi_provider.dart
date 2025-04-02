@@ -1,16 +1,12 @@
 import 'dart:async';
-
 import 'package:ai_defender_tablet/enums/viewstate.dart';
-import 'package:ai_defender_tablet/helpers/common_function.dart';
 import 'package:ai_defender_tablet/provider/base_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:wifi_iot/wifi_iot.dart';
 import 'package:wifi_scan/wifi_scan.dart';
-
 import '../constants/channel_constants.dart';
 import '../helpers/life_cycle_event_handler.dart';
 import '../helpers/toast_helper.dart';
@@ -117,7 +113,7 @@ class WifiProvider extends BaseProvider {
     }
   }
 
-  Future<void> checkLocationServices(BuildContext context) async {
+/*  Future<void> checkLocationServices(BuildContext context) async {
     await Geolocator.isLocationServiceEnabled().then((isServiceEnabled) async {
       if (!isServiceEnabled) {
         CommonFunction.showEnableLocationDialog(context).then((_){
@@ -127,7 +123,7 @@ class WifiProvider extends BaseProvider {
        await checkLocationPermissions(context);
       }
     });
-  }
+  }*/
 
   Future<void> checkLocationPermissions(BuildContext context) async {
 

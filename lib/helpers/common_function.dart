@@ -1,11 +1,8 @@
 import 'dart:io';
-
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:geolocator/geolocator.dart';
-
 import 'package:url_launcher/url_launcher.dart';
 import '../constants/colors_constants.dart';
 import '../constants/image_constants.dart';
@@ -133,7 +130,8 @@ class CommonFunction {
     return DateFormat(format, 'en').format(date).toString();
   }
 
-  static Future<void> showEnableLocationDialog(BuildContext context) {
+  //Commented Due to Linux Issue
+  /*static Future<void> showEnableLocationDialog(BuildContext context) {
     return showDialog(
       context: context,
       builder: (context) {
@@ -160,7 +158,7 @@ class CommonFunction {
         );
       },
     );
-  }
+  }*/
 
   static Future<String> getDeviceId() async {
     DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();

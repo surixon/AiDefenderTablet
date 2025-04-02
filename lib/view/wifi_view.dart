@@ -32,7 +32,8 @@ class WifiViewState extends State<WifiView> {
         onModelReady: (provider) async {
           _wifiProvider = provider;
           // provider.overlayPermission(context);
-          await provider.checkLocationServices(context);
+          //Commented Due to Linux Issue
+          //await provider.checkLocationServices(context);
           //provider.lifeCycleEventHandler();
         },
         builder: (context, provider, _) => Scaffold(

@@ -66,7 +66,7 @@ dependencies:
   wakelock_plus: ^1.2.10
   flutter_animate: ^4.5.0
   flutter_blue_plus:
-  geolocator:
+  #geolocator:
   permission_handler:
   device_info_plus: ^11.2.0
   internet_connection_checker:
