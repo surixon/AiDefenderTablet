@@ -1,0 +1,20 @@
+{
+  "buildFiles": [
+    "/Users/akshaythakur/Documents/development/flutter/packages/flutter_tools/gradle/src/main/groovy/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/Users/akshaythakur/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/Users/akshaythakur/Documents/flutter/AiDefenderTablet/android/app/.cxx/Debug/6u6d425b/x86",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/Users/akshaythakur/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/Users/akshaythakur/Documents/flutter/AiDefenderTablet/android/app/.cxx/Debug/6u6d425b/x86",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {}
+}

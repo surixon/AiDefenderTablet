@@ -5,6 +5,7 @@ import 'package:ai_defender_tablet/view/dashboard_view.dart';
 import 'package:ai_defender_tablet/view/downalod_app_view.dart';
 import 'package:ai_defender_tablet/view/login_view.dart';
 import 'package:ai_defender_tablet/view/otp_view.dart';
+import 'package:ai_defender_tablet/view/select_company_id_view.dart';
 import 'package:ai_defender_tablet/view/settings_view.dart';
 import 'package:ai_defender_tablet/view/splash_view.dart';
 import 'package:ai_defender_tablet/view/wifi_view.dart';
@@ -83,6 +84,13 @@ final router = GoRouter(
       },
     ),
     GoRoute(
+      path: AppPaths.selectCompanyId,
+      name: AppPaths.selectCompanyId,
+      pageBuilder: (context, state) {
+        return const MaterialPage(child: SelectCompanyIdView());
+      },
+    ),
+    GoRoute(
       path: AppPaths.addLocationView,
       name: AppPaths.addLocationView,
       pageBuilder: (context, state) {
@@ -128,4 +136,5 @@ class AppPaths {
   static const bluetooth = '/bluetooth';
   static const addLocationView = '/addLocationView';
   static const locations = '/locations';
+  static const selectCompanyId = '/selectCompanyId';
 }

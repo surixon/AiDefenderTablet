@@ -113,8 +113,8 @@ class WifiProvider extends BaseProvider {
     }
   }
 
-/*  Future<void> checkLocationServices(BuildContext context) async {
-    await Geolocator.isLocationServiceEnabled().then((isServiceEnabled) async {
+  Future<void> checkLocationServices(BuildContext context) async {
+    /*await Geolocator.isLocationServiceEnabled().then((isServiceEnabled) async {
       if (!isServiceEnabled) {
         CommonFunction.showEnableLocationDialog(context).then((_){
           checkLocationServices(context);
@@ -122,12 +122,11 @@ class WifiProvider extends BaseProvider {
       }else{
        await checkLocationPermissions(context);
       }
-    });
-  }*/
+    });*/
+    await checkLocationPermissions(context);
+  }
 
   Future<void> checkLocationPermissions(BuildContext context) async {
-
-
     var permissionGranted = await Permission.location.status;
     if (permissionGranted == PermissionStatus.denied) {
       permissionGranted=  await Permission.location.request();
@@ -144,4 +143,5 @@ class WifiProvider extends BaseProvider {
       });
     }
   }
+
 }

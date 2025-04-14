@@ -33,7 +33,7 @@ class WifiViewState extends State<WifiView> {
           _wifiProvider = provider;
           // provider.overlayPermission(context);
           //Commented Due to Linux Issue
-          //await provider.checkLocationServices(context);
+          await provider.checkLocationServices(context);
           //provider.lifeCycleEventHandler();
         },
         builder: (context, provider, _) => Scaffold(
@@ -83,7 +83,10 @@ class WifiViewState extends State<WifiView> {
         ),
         child: Row(
           children: [
-            Icon(signalIcon,size: 32,),
+            Icon(
+              signalIcon,
+              size: 32,
+            ),
             SizedBox(
               width: 16.w,
             ),
