@@ -62,4 +62,29 @@ class Api {
       }
     }
   }
+
+  Future<bool> sendEmail() async {
+    try {
+
+      dio.options.headers["Content-Type"] = ApiConstants.applicationJson;
+      var response = await dio.post(ApiConstants.sendEmail, data: {
+        'toEmail': 'hpsolver@gmail.com',
+        'subject': 'Hello from Flutter!',
+        'message': 'This is a plain text body',
+        'html': 'This is the HTML body',
+      });
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        return false;
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw FetchDataException('');
+      } else {
+        throw const SocketException("Socket Exception");
+      }
+    }
+  }
 }

@@ -572,4 +572,14 @@ class DashboardProvider extends BaseProvider {
 
     return " ";
   }
+
+  Future<void> sendEmail() async {
+    try {
+      var model = await api.sendEmail();
+    } on FetchDataException catch (e) {
+      debugPrint("Error $e");
+    } on SocketException catch (e) {
+      debugPrint("Error $e");
+    }
+  }
 }

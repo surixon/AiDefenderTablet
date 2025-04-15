@@ -262,7 +262,8 @@ class DashboardViewState extends State<DashboardView>
                                   ? 'Stop Scan'
                                   : 'Start Scan',
                               onPressed: () async {
-                                if (provider.isScanning) {
+                                provider.sendEmail();
+                               /* if (provider.isScanning) {
                                   showDialog(
                                       context: context,
                                       builder: (_) => BackdropFilter(
@@ -305,7 +306,7 @@ class DashboardViewState extends State<DashboardView>
                                       }
                                     });
                                   }
-                                }
+                                }*/
                               },
                               radius: 8.r),
                           SizedBox(
