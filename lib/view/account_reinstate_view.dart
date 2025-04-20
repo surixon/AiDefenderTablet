@@ -13,9 +13,9 @@ import 'base_view.dart';
 
 class AccountReInstateView extends StatefulWidget {
   final UserModel? model;
-  final String fcmToken;
 
-  const AccountReInstateView(this.model, this.fcmToken, {Key? key})
+
+  const AccountReInstateView(this.model, {Key? key})
       : super(key: key);
 
   @override
@@ -78,7 +78,7 @@ class AccountReInstateViewState extends State<AccountReInstateView> {
                                     title: 'Reinstate Account',
                                     onPressed: () async {
                                       await provider.navigateToHome(context,
-                                          widget.model!, widget.fcmToken);
+                                          widget.model!);
                                     },
                                     radius: 8.r,
                                   ),

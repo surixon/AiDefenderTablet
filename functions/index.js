@@ -10,16 +10,21 @@
 const {onRequest} = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 const sgMail = require("@sendgrid/mail");
+const logger = require("firebase-functions/logger");
 const functions = require("firebase-functions");
+
+// Create and deploy your first functions
+// https://firebase.google.com/docs/functions/get-started
 
 // Access the API key from the config
 const SENDGRID_API_KEY = functions.config().sendgrid.key;
 sgMail.setApiKey(SENDGRID_API_KEY);
 
-// Initialize Firebase Admin SDK
-admin.initializeApp();
+exports.helloWorld = onRequest((request, response) => {
+  logger.info("Hello logs!", {structuredData: true});
+  response.send("Hello from Firebase!");
+});
 
-// Define the Cloud Function
 exports.sendNotification = onRequest(async (req, res) => {
   try {
     // Extract token, title, and body from the request
@@ -86,4 +91,3 @@ exports.sendEmail = onRequest(async (req, res) => {
     res.status(500).json({success: false, message: error.message});
   }
 });
-

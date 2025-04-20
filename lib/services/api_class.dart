@@ -65,13 +65,12 @@ class Api {
 
   Future<bool> sendEmail() async {
     try {
-
       dio.options.headers["Content-Type"] = ApiConstants.applicationJson;
       var response = await dio.post(ApiConstants.sendEmail, data: {
         'toEmail': 'hpsolver@gmail.com',
         'subject': 'Hello from Flutter!',
         'message': 'This is a plain text body',
-        'html': 'This is the HTML body',
+        'html': '<p><strong>John Doe</strong> asked: How do I reset my password?</p>',
       });
 
       if (response.statusCode == 200) {

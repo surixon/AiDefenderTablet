@@ -59,10 +59,11 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCBmlRBwgDlIeyw-hQ37cISUd84PtYnguE',
-    appId: '1:17912479230:ios:5583549c494ce6c25e14af',
+    appId: '1:17912479230:ios:bbb2e71c2e45e9c85e14af',
     messagingSenderId: '17912479230',
     projectId: 'ai-defender-d74f2',
     storageBucket: 'ai-defender-d74f2.appspot.com',
     iosBundleId: 'com.example.aiDefenderTablet',
   );
+
 }

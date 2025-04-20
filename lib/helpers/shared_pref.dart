@@ -6,6 +6,7 @@ class SharedPref{
   static const dark="dark";
   static const light="light";
   static const isLoggedIn='isLoggedIn';
+  static const userId='userId';
   static const passwordLessEmail="passwordLessEmail";
   static const fcmToken="fcmToken";
   static const user="user";

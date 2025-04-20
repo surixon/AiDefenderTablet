@@ -9,15 +9,18 @@ import 'base_provider.dart';
 
 class AccountReInStateProvider extends BaseProvider {
   Future<void> navigateToHome(
-      BuildContext context, UserModel model, String fcmToken) async {
-    await updateFcmToken(fcmToken).then((value) {
+    BuildContext context,
+    UserModel model,
+  ) async {
+    await update().then((value) {
       SharedPref.prefs?.setBool(SharedPref.isLoggedIn, true);
+      SharedPref.prefs?.setString(SharedPref.userId, Globals.firebaseUser?.uid??'');
       context.go(AppPaths.dashboard);
     });
   }
 
-  Future<void> updateFcmToken(String? fcmToken) async {
-    Map<String, dynamic> data = { 'isDeleted': false};
+  Future<void> update() async {
+    Map<String, dynamic> data = {'isDeleted': false};
     await Globals.userReference.doc(Globals.firebaseUser?.uid).update(data);
     await Globals.deletedUserReference.doc(Globals.firebaseUser?.uid).delete();
   }

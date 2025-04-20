@@ -9,6 +9,7 @@ import 'package:ai_defender_tablet/helpers/toast_helper.dart';
 import 'package:ai_defender_tablet/models/ai_defender_model.dart';
 import 'package:ai_defender_tablet/provider/base_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cron/cron.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -575,11 +576,36 @@ class DashboardProvider extends BaseProvider {
 
   Future<void> sendEmail() async {
     try {
+      final HttpsCallable sendEmailFunction =
+      FirebaseFunctions.instance.httpsCallable('sendEmail');
+
+      final response = await sendEmailFunction.call(<String, dynamic>{
+        "to": "hpsolver@gmail.com",
+        'subject': '🎉 Welcome!',
+        'text': 'Thanks for joining us.',
+        'html': '<h1>Welcome to the app!</h1><p>We\'re glad to have you.</p>',
+      });
+
+      final data = response.data;
+      if (data['success']) {
+        print('✅ Email sent: ${data['message']}');
+      } else {
+        print('❌ Error sending email: ${data['error']}');
+      }
+    } catch (e) {
+      print('🔥 Exception: $e');
+    }
+  }
+
+
+
+/*  Future<void> sendEmail() async {
+    try {
       var model = await api.sendEmail();
     } on FetchDataException catch (e) {
       debugPrint("Error $e");
     } on SocketException catch (e) {
       debugPrint("Error $e");
     }
-  }
+  }*/
 }

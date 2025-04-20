@@ -70,6 +70,7 @@ dependencies:
   permission_handler:
   device_info_plus: ^11.2.0
   internet_connection_checker:
+  cloud_functions: ^5.4.0
 
 
 

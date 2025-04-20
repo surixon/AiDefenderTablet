@@ -11,7 +11,7 @@ import '../models/user_model.dart';
 import '../routes.dart';
 import '../view/account_reinstate_view.dart';
 
-class OtpProvider extends BaseProvider{
+class OtpProvider extends BaseProvider {
   String verificationId = '';
 
   bool _verifyLoader = false;
@@ -59,11 +59,11 @@ class OtpProvider extends BaseProvider{
       await Globals.auth
           .signInWithCredential(credential)
           .then((UserCredential? userCredential) async {
-
         if (userCredential != null) {
           await createUser(context, fcmToken).then((value) {
             verifyLoader = false;
             SharedPref.prefs?.setBool(SharedPref.isLoggedIn, true);
+
             context.go(AppPaths.download);
           });
         } else {
@@ -96,16 +96,16 @@ class OtpProvider extends BaseProvider{
           showDialog(
               context: Globals.navigatorKey.currentContext!,
               builder: (_) => BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-                child: AccountReInstateView(model, fcmToken),
-              ));
+                    filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                    child: AccountReInstateView(model),
+                  ));
         }
       } else {
         Map<String, dynamic> data = {'createdAt': DateTime.now()};
         await Globals.userReference.doc(Globals.firebaseUser?.uid).set(data);
+        SharedPref.prefs
+            ?.setString(SharedPref.userId, Globals.firebaseUser?.uid ?? '');
       }
     });
   }
-
-
 }

@@ -1,3 +1,7 @@
 {
-  "wifi": "WiFi"
+  "wifi": "WiFi",
+  "login_with": "Login With",
+  "login_with_phone": "Login With Phone",
+  "or": "or",
+  "company_id": "Company Id"
 }

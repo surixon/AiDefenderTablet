@@ -14,5 +14,42 @@
         "npm --prefix \"$RESOURCE_DIR\" run lint"
       ]
     }
-  ]
+  ],
+  "emulators": {
+    "functions": {
+      "port": 5001
+    },
+    "ui": {
+      "enabled": true
+    },
+    "singleProjectMode": true
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "ai-defender-d74f2",
+          "appId": "1:17912479230:android:e8349e2a12ef146a5e14af",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "ai-defender-d74f2",
+          "appId": "1:17912479230:ios:bbb2e71c2e45e9c85e14af",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "ai-defender-d74f2",
+          "configurations": {
+            "android": "1:17912479230:android:e8349e2a12ef146a5e14af",
+            "ios": "1:17912479230:ios:bbb2e71c2e45e9c85e14af"
+          }
+        }
+      }
+    }
+  }
 }
