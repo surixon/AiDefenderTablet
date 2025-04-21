@@ -409,7 +409,7 @@ class DashboardProvider extends BaseProvider {
     String deviceId = await CommonFunction.getDeviceId();
 
     await Globals.locationReference
-        .where('userId', isEqualTo: Globals.auth.currentUser?.uid)
+        .where('userId', isEqualTo: SharedPref.prefs?.getString(SharedPref.userId))
         .where('deviceIds', arrayContainsAny: [deviceId])
         .get()
         .then((snapshot) async {
@@ -574,32 +574,11 @@ class DashboardProvider extends BaseProvider {
     return " ";
   }
 
+
+
+
+
   Future<void> sendEmail() async {
-    try {
-      final HttpsCallable sendEmailFunction =
-      FirebaseFunctions.instance.httpsCallable('sendEmail');
-
-      final response = await sendEmailFunction.call(<String, dynamic>{
-        "to": "hpsolver@gmail.com",
-        'subject': '🎉 Welcome!',
-        'text': 'Thanks for joining us.',
-        'html': '<h1>Welcome to the app!</h1><p>We\'re glad to have you.</p>',
-      });
-
-      final data = response.data;
-      if (data['success']) {
-        print('✅ Email sent: ${data['message']}');
-      } else {
-        print('❌ Error sending email: ${data['error']}');
-      }
-    } catch (e) {
-      print('🔥 Exception: $e');
-    }
-  }
-
-
-
-/*  Future<void> sendEmail() async {
     try {
       var model = await api.sendEmail();
     } on FetchDataException catch (e) {
@@ -607,5 +586,5 @@ class DashboardProvider extends BaseProvider {
     } on SocketException catch (e) {
       debugPrint("Error $e");
     }
-  }*/
+  }
 }

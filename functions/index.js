@@ -8,22 +8,14 @@
  */
 
 const {onRequest} = require("firebase-functions/v2/https");
-const admin = require("firebase-admin");
 const sgMail = require("@sendgrid/mail");
-const logger = require("firebase-functions/logger");
-const functions = require("firebase-functions");
+const admin = require("firebase-admin");
+const {defineSecret} = require("firebase-functions/params");
 
-// Create and deploy your first functions
-// https://firebase.google.com/docs/functions/get-started
+const SENDGRID_API_KEY = defineSecret("SENDGRID_API_KEY");
 
-// Access the API key from the config
-const SENDGRID_API_KEY = functions.config().sendgrid.key;
-sgMail.setApiKey(SENDGRID_API_KEY);
-
-exports.helloWorld = onRequest((request, response) => {
-  logger.info("Hello logs!", {structuredData: true});
-  response.send("Hello from Firebase!");
-});
+// Initialize Firebase Admin SDK
+admin.initializeApp();
 
 exports.sendNotification = onRequest(async (req, res) => {
   try {
@@ -67,27 +59,30 @@ exports.sendNotification = onRequest(async (req, res) => {
   }
 });
 
-exports.sendEmail = onRequest(async (req, res) => {
-  try {
-    // Parse the incoming request body
-    const {toEmail, subject, message} = req.body;
+exports.sendEmail = onRequest(
+    {secrets: [SENDGRID_API_KEY]},
+    async (req, res) => {
+      sgMail.setApiKey(SENDGRID_API_KEY.value());
+      if (req.method !== "POST") {
+        return res.status(405).send("Method Not Allowed");
+      }
 
-    // Prepare email message
-    const msg = {
-      to: toEmail,
-      from: "alerts@aidefender1000.com",
-      subject: subject,
-      text: message,
-    };
+      const {to, subject, text, html} = req.body;
 
-    console.error("Request sending email:", msg);
+      const msg = {
+        to,
+        from: "alerts@aidefender1000.com",
+        subject,
+        text,
+        html: html || `<p>${text}</p>`,
+      };
 
-    // Send email via SendGrid
-    await sgMail.send(msg);
-    // Send success response
-    res.status(200).json({success: true, message: "Email sent successfully!"});
-  } catch (error) {
-    console.error("Error sending email:", error);
-    res.status(500).json({success: false, message: error.message});
-  }
-});
+      try {
+        await sgMail.send(msg);
+        return res.status(200).send({success: true, message: "Email sent"});
+      } catch (error) {
+        console.error("SendGrid error:", error);
+        return res.status(500).send({success: false, error: error.toString()});
+      }
+    });
+

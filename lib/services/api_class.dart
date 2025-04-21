@@ -67,10 +67,9 @@ class Api {
     try {
       dio.options.headers["Content-Type"] = ApiConstants.applicationJson;
       var response = await dio.post(ApiConstants.sendEmail, data: {
-        'toEmail': 'hpsolver@gmail.com',
+        'to': 'hpsolver@gmail.com',
         'subject': 'Hello from Flutter!',
-        'message': 'This is a plain text body',
-        'html': '<p><strong>John Doe</strong> asked: How do I reset my password?</p>',
+        'text': 'This is a plain text body'
       });
 
       if (response.statusCode == 200) {
