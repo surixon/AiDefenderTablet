@@ -62,6 +62,7 @@ exports.sendNotification = onRequest(async (req, res) => {
 exports.sendEmail = onRequest(
     {secrets: [SENDGRID_API_KEY]},
     async (req, res) => {
+      console.error("SendGrid error:", SENDGRID_API_KEY.value());
       sgMail.setApiKey(SENDGRID_API_KEY.value());
       if (req.method !== "POST") {
         return res.status(405).send("Method Not Allowed");

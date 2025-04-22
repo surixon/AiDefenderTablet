@@ -68,8 +68,19 @@ class Api {
       dio.options.headers["Content-Type"] = ApiConstants.applicationJson;
       var response = await dio.post(ApiConstants.sendEmail, data: {
         'to': 'hpsolver@gmail.com',
-        'subject': 'Hello from Flutter!',
-        'text': 'This is a plain text body'
+        'subject': 'Alert from AI Defender',
+        'html': '''
+<p>No-Reply</p>
+<p><strong>This is an alert from your AI Defender Covert Device Firewall.</strong></p>
+<p><strong>Lingering Bluetooth Device found.</strong> The following has been detected for longer than your time-on-site setting:</p>
+<ul>
+  <li><strong>Device:</strong> 01-23-45-67-89-ab Randy’s iPhone</li>
+  <li><strong>Device:</strong> 01-23-45-67-89-ab Generic</li>
+</ul>
+<p><strong>Potential Covert Device found.</strong></p>
+<p><strong>None</strong></p>
+<p>If you see a known safe device, you can manage your alerts, view log files, and remove any device from your alerts list using the <strong>AI Defender Mobile App</strong>.</p>
+'''
       });
 
       if (response.statusCode == 200) {
