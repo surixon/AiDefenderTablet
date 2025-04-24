@@ -15,6 +15,7 @@ import '../dialog/common_dialog.dart';
 import '../enums/viewstate.dart';
 import '../helpers/common_function.dart';
 import '../helpers/decoration.dart';
+import '../helpers/shared_pref.dart';
 
 class LocationView extends StatefulWidget {
   const LocationView({super.key});
@@ -42,7 +43,7 @@ class LocationViewState extends State<LocationView> {
         padding: const EdgeInsets.only( left: 24, right: 24),
         child: StreamBuilder(
             stream: Globals.locationReference
-                .where('userId', isEqualTo: Globals.firebaseUser?.uid)
+                .where('userId', isEqualTo: SharedPref.prefs?.getString(SharedPref.userId))
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasData &&

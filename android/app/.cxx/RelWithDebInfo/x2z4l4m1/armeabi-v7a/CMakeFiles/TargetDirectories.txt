@@ -1,0 +1,2 @@
+/Users/akshaythakur/Documents/flutter/AiDefenderTablet/android/app/.cxx/RelWithDebInfo/x2z4l4m1/armeabi-v7a/CMakeFiles/edit_cache.dir
+/Users/akshaythakur/Documents/flutter/AiDefenderTablet/android/app/.cxx/RelWithDebInfo/x2z4l4m1/armeabi-v7a/CMakeFiles/rebuild_cache.dir

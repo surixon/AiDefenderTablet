@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 import 'package:ai_defender_tablet/enums/viewstate.dart';
+import 'package:ai_defender_tablet/globals.dart';
 import 'package:ai_defender_tablet/helpers/decoration.dart';
 import 'package:ai_defender_tablet/helpers/keyboard_helper.dart';
 import 'package:ai_defender_tablet/provider/dashboard_provider.dart';
@@ -208,27 +209,31 @@ class DashboardViewState extends State<DashboardView>
                                                 provider.selectedLocation =
                                                     value;
                                               })
-                                    : TextButton(
-                                        onPressed: () {
-                                          context
-                                              .pushNamed(
-                                                  AppPaths.addLocationView)
-                                              .then((id) async {
-                                            await provider
-                                                .getLocationName()
-                                                .then((__) {
-                                              if (id != null) {
-                                                provider.selectedLocation =
-                                                    id.toString();
-                                              }
-                                            });
-                                          });
-                                        },
-                                        child: Text('ADD LOCATION',
-                                            style: ViewDecoration
-                                                .textStyleSemiBold(
-                                                    kColor0294EA, 22, true)),
-                                      ),
+                                    : Globals.firebaseUser?.uid != null
+                                        ? TextButton(
+                                            onPressed: () {
+                                              context
+                                                  .pushNamed(
+                                                      AppPaths.addLocationView)
+                                                  .then((id) async {
+                                                await provider
+                                                    .getLocationName()
+                                                    .then((__) {
+                                                  if (id != null) {
+                                                    provider.selectedLocation =
+                                                        id.toString();
+                                                  }
+                                                });
+                                              });
+                                            },
+                                            child: Text('ADD LOCATION',
+                                                style: ViewDecoration
+                                                    .textStyleSemiBold(
+                                                        kColor0294EA,
+                                                        22,
+                                                        true)),
+                                          )
+                                        : const SizedBox(),
                                 SizedBox(
                                   height: 12.h,
                                 ),
@@ -262,8 +267,7 @@ class DashboardViewState extends State<DashboardView>
                                   ? 'Stop Scan'
                                   : 'Start Scan',
                               onPressed: () async {
-                                provider.sendEmail();
-                               /* if (provider.isScanning) {
+                                if (provider.isScanning) {
                                   showDialog(
                                       context: context,
                                       builder: (_) => BackdropFilter(
@@ -306,7 +310,7 @@ class DashboardViewState extends State<DashboardView>
                                       }
                                     });
                                   }
-                                }*/
+                                }
                               },
                               radius: 8.r),
                           SizedBox(

@@ -2,6 +2,7 @@ import 'package:ai_defender_tablet/enums/viewstate.dart';
 import 'package:ai_defender_tablet/helpers/toast_helper.dart';
 import 'package:ai_defender_tablet/provider/base_provider.dart';
 import '../globals.dart';
+import '../helpers/shared_pref.dart';
 
 class AddLocationProvider extends BaseProvider {
   Future<void> saveLocation(String location) async {
@@ -13,7 +14,7 @@ class AddLocationProvider extends BaseProvider {
         .then((snapshot) async {
       if (snapshot.docs.isEmpty) {
         await Globals.locationReference.doc().set({
-          'userId': Globals.firebaseUser?.uid,
+          'userId': SharedPref.prefs?.getString(SharedPref.userId),
           'locationName': location,
         });
         ToastHelper.showMessage('Location added successfully!');

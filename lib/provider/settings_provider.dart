@@ -58,9 +58,9 @@ class SettingsProvider extends BaseProvider {
 
   Future<void> deleteAccount() async {
     Map<String, dynamic> data = {'isDeleted': true};
-    await Globals.userReference.doc(Globals.firebaseUser?.uid).update(data);
+    await Globals.userReference.doc(SharedPref.prefs?.getString(SharedPref.userId)).update(data);
     await Globals.deletedUserReference
-        .doc(Globals.firebaseUser?.uid)
+        .doc(SharedPref.prefs?.getString(SharedPref.userId))
         .set({"deletedAt": DateTime.now()});
   }
 

@@ -14,14 +14,14 @@ class AccountReInStateProvider extends BaseProvider {
   ) async {
     await update().then((value) {
       SharedPref.prefs?.setBool(SharedPref.isLoggedIn, true);
-      SharedPref.prefs?.setString(SharedPref.userId, Globals.firebaseUser?.uid??'');
+      SharedPref.prefs?.setString(SharedPref.userId, SharedPref.prefs?.getString(SharedPref.userId)??'');
       context.go(AppPaths.dashboard);
     });
   }
 
   Future<void> update() async {
     Map<String, dynamic> data = {'isDeleted': false};
-    await Globals.userReference.doc(Globals.firebaseUser?.uid).update(data);
-    await Globals.deletedUserReference.doc(Globals.firebaseUser?.uid).delete();
+    await Globals.userReference.doc(SharedPref.prefs?.getString(SharedPref.userId)).update(data);
+    await Globals.deletedUserReference.doc(SharedPref.prefs?.getString(SharedPref.userId)).delete();
   }
 }

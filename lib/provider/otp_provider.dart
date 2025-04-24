@@ -20,7 +20,7 @@ class OtpProvider extends BaseProvider {
 
   set verifyLoader(bool value) {
     _verifyLoader = value;
-    notifyListeners();
+    customNotify();
   }
 
   Future<void> loginUser(String phone, BuildContext context) async {
@@ -63,7 +63,6 @@ class OtpProvider extends BaseProvider {
           await createUser(context, fcmToken).then((value) {
             verifyLoader = false;
             SharedPref.prefs?.setBool(SharedPref.isLoggedIn, true);
-
             context.go(AppPaths.download);
           });
         } else {
@@ -103,9 +102,9 @@ class OtpProvider extends BaseProvider {
       } else {
         Map<String, dynamic> data = {'createdAt': DateTime.now()};
         await Globals.userReference.doc(Globals.firebaseUser?.uid).set(data);
-        SharedPref.prefs
-            ?.setString(SharedPref.userId, Globals.firebaseUser?.uid ?? '');
       }
+      SharedPref.prefs
+          ?.setString(SharedPref.userId, Globals.firebaseUser?.uid ?? '');
     });
   }
 }

@@ -18,7 +18,7 @@ class SendNotification {
     String message,
     String fcmToken,
   ) async {
-   /* var userId = Globals.firebaseUser?.uid;
+   /* var userId = SharedPref.prefs?.getString(SharedPref.userId);
     var id = Globals.notificationsReference
         .doc(userId)
         .collection('notification')
@@ -75,7 +75,7 @@ class SendNotification {
       String fcmToken,
       ) async {
 
-    var userId = Globals.firebaseUser?.uid;
+    var userId = SharedPref.prefs?.getString(SharedPref.userId);
     var id = Globals.notificationsReference
         .doc(userId)
         .collection('notification')
