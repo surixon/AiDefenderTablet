@@ -26,54 +26,49 @@ class LoginView extends StatefulWidget {
 
 class LoginViewState extends State<LoginView> {
   final _phoneController = TextEditingController();
-  final _companyIdController = TextEditingController(text: "CsejjKrnY1dkKjxOMQ6rBGYkJvp1");
+  final _companyIdController = TextEditingController(/*text: "net9CNjI9JglVepBmnby9u4h10q1"*/);
 
   @override
   Widget build(BuildContext context) {
     return BaseView<LoginProvider>(
-        builder: (context, provider, _) => GestureDetector(
-              onTap: () {
-                KeyboardHelper.hideKeyboard(context);
-              },
-              child: DefaultTabController(
-                length: 2,
-                child: Scaffold(
-                  backgroundColor: kWhiteColor,
-                  body: Padding(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 48.w, vertical: 100.h),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        TabBar(
-                          indicatorColor: Theme.of(context).primaryColor,
-                          indicatorPadding:
-                              const EdgeInsets.symmetric(horizontal: 16),
-                          tabs: [
-                            Text(
-                              "login_with_phone".tr(),
-                              style: ViewDecoration.textStyleBoldUrbanist(
-                                  kBlackColor, 16),
-                            ),
-                            Text("company_id".tr(),
-                                style: ViewDecoration.textStyleBoldUrbanist(
-                                    kBlackColor, 16))
-                          ],
-                        ),
-                        const SizedBox(
-                          height: 24,
-                        ),
-                        Expanded(
-                            child: TabBarView(children: [
-                          loginWithPhone(provider),
-                          loginWithCompanyId(provider),
-                        ]))
-                      ],
-                    ),
+        builder: (context, provider, _) => DefaultTabController(
+          length: 2,
+          child: Scaffold(
+
+            body: Padding(
+              padding:
+                  const EdgeInsets.only(left: 36,right: 36,top: 80 ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TabBar(
+                    indicatorColor: Theme.of(context).primaryColor,
+                    labelPadding: const EdgeInsets.all(8),
+                    indicatorSize: TabBarIndicatorSize.label,
+                    tabs: [
+                      Text(
+                        "login_with_phone".tr(),
+                        style: ViewDecoration.textStyleBoldUrbanist(
+                            kBlackColor, 18),
+                      ),
+                      Text("company_id".tr(),
+                          style: ViewDecoration.textStyleBoldUrbanist(
+                              kBlackColor, 18))
+                    ],
                   ),
-                ),
+                  const SizedBox(
+                    height: 24,
+                  ),
+                  Expanded(
+                      child: TabBarView(children: [
+                    loginWithPhone(provider),
+                    loginWithCompanyId(provider),
+                  ]))
+                ],
               ),
-            ));
+            ),
+          ),
+        ));
   }
 
   privacyPolicyWidget(LoginProvider provider) {
@@ -103,7 +98,7 @@ class LoginViewState extends State<LoginView> {
             ]),
             textAlign: TextAlign.start,
             softWrap: true,
-            style: const TextStyle(fontSize: 12),
+            style: const TextStyle(fontSize: 18),
           ),
         )
       ],
@@ -112,19 +107,20 @@ class LoginViewState extends State<LoginView> {
 
   loginWithPhone(LoginProvider provider) {
     return SingleChildScrollView(
+      padding: const EdgeInsets.only(bottom: 48),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             "Hello! Enter your Registered\nnumber to get started",
-            style: ViewDecoration.textStyleBoldUrbanist(kBlackColor, 30.sp),
+            style: ViewDecoration.textStyleBoldUrbanist(kBlackColor, 30),
           ),
           SizedBox(
             height: 8.h,
           ),
           Text(
             "We Will Text Message To Verify\nYour Phone Number",
-            style: ViewDecoration.textStyleMediumUrbanist(kColor838BA1, 16.sp),
+            style: ViewDecoration.textStyleMediumUrbanist(kColor838BA1, 16),
           ),
           SizedBox(
             height: 48.h,
@@ -153,14 +149,14 @@ class LoginViewState extends State<LoginView> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Icon(Icons.keyboard_arrow_down),
-                          SizedBox(
-                            width: 8.w,
+                          const SizedBox(
+                            width: 8,
                           ),
                           if (p0?.flagUri != null)
                             Image.asset(
                               p0!.flagUri!,
                               package: 'country_code_picker',
-                              width: 32,
+                              width: 40,
                             ),
                         ],
                       ),
@@ -176,7 +172,7 @@ class LoginViewState extends State<LoginView> {
                   controller: _phoneController,
                   textInputAction: TextInputAction.done,
                   keyboardType: TextInputType.phone,
-                  style: ViewDecoration.textStyleMedium(kBlackColor, 20.sp),
+                  style: ViewDecoration.textStyleMedium(kBlackColor, 20),
                   decoration: ViewDecoration.textFiledDecorationWithoutBorder(
                       fillColor: kColorF7F8F9, hintText: 'Mobile Number'),
                 ))
@@ -219,12 +215,13 @@ class LoginViewState extends State<LoginView> {
 
   loginWithCompanyId(LoginProvider provider) {
     return SingleChildScrollView(
+      padding: const EdgeInsets.only(bottom: 48),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             "Hello! Enter your Company ID\nto get started",
-            style: ViewDecoration.textStyleBoldUrbanist(kBlackColor, 30.sp),
+            style: ViewDecoration.textStyleBoldUrbanist(kBlackColor, 30),
           ),
           SizedBox(
             height: 48.h,
@@ -244,7 +241,7 @@ class LoginViewState extends State<LoginView> {
                   controller: _companyIdController,
                   textInputAction: TextInputAction.done,
                   keyboardType: TextInputType.text,
-                  style: ViewDecoration.textStyleMedium(kBlackColor, 20.sp),
+                  style: ViewDecoration.textStyleMedium(kBlackColor, 20),
                   decoration: ViewDecoration.textFiledDecorationWithoutBorder(
                       fillColor: kColorF7F8F9, hintText: 'company_id'.tr()),
                 ))

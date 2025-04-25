@@ -74,7 +74,7 @@ class DashboardProvider extends BaseProvider {
   Future<void> startWifiScan() async {
     setState(ViewState.busy);
     lastScan = DateTime.now();
-    nextScan = lastScan?.add(const Duration(minutes: 20));
+    nextScan = lastScan?.add(const Duration(hours: 1));
 
     await Globals.locationReference.doc(selectedLocation).update({
       'lastScan': lastScan,
@@ -145,8 +145,8 @@ class DashboardProvider extends BaseProvider {
 
   Future<void> startWifiScanning(BuildContext context) async {
     try {
-      ChannelConstants.platform
-          .invokeMethod('startScan', {'uid': SharedPref.prefs?.getString(SharedPref.userId) ?? ''});
+      ChannelConstants.platform.invokeMethod('startScan',
+          {'uid': SharedPref.prefs?.getString(SharedPref.userId) ?? ''});
     } on PlatformException catch (e) {
       debugPrint(e.message);
     }
@@ -374,9 +374,9 @@ class DashboardProvider extends BaseProvider {
   Future<void> getLocationName() async {
     String deviceId = await CommonFunction.getDeviceId();
 
-
     await Globals.locationReference
-        .where('userId', isEqualTo: SharedPref.prefs?.getString(SharedPref.userId))
+        .where('userId',
+            isEqualTo: SharedPref.prefs?.getString(SharedPref.userId))
         .get()
         .then((snapshot) {
       if (snapshot.docs.isNotEmpty) {
@@ -412,7 +412,8 @@ class DashboardProvider extends BaseProvider {
     String deviceId = await CommonFunction.getDeviceId();
 
     await Globals.locationReference
-        .where('userId', isEqualTo: SharedPref.prefs?.getString(SharedPref.userId))
+        .where('userId',
+            isEqualTo: SharedPref.prefs?.getString(SharedPref.userId))
         .where('deviceIds', arrayContainsAny: [deviceId])
         .get()
         .then((snapshot) async {
@@ -435,14 +436,14 @@ class DashboardProvider extends BaseProvider {
       Map<String, dynamic>? userDetails = value.data() as Map<String, dynamic>;
 
       hideNotification = userDetails['hideNotification'] ?? [];
-      fcmToken = userDetails['fcm'];
-      emailId = userDetails['email'];
+      fcmToken = userDetails['fcm'] ?? '';
+      emailId = userDetails['email'] ?? '';
 
       if (userDetails['notify'] != null) {
         notifyNewDevice = userDetails['notify']['newDevice'];
         notifySuspiciousDevice = userDetails['notify']['suspicious'];
         notifyRemoteDevice = userDetails['notify']['remote'];
-        emailNotification = userDetails['notify']['emailNotification'];
+        emailNotification = userDetails['notify']['emailNotification'] ?? false;
       }
       if (userDetails['scanSettings'] != null) {
         btScan = userDetails['scanSettings']['bluetooth'];
@@ -513,7 +514,7 @@ class DashboardProvider extends BaseProvider {
         .then((snapshot) async {
       debugPrint("snapshot length ${snapshot.docs.length}");
 
-     /* if (snapshot.docs.length < 6) {
+      /* if (snapshot.docs.length < 6) {
         return;
       }*/
 
@@ -524,7 +525,7 @@ class DashboardProvider extends BaseProvider {
       await Future.forEach(snapshot.docs, (doc) async {
         List<String> devices = [];
         await Future.forEach(doc.data()["bluetoothScan"], (dynamic device) {
-         /* double distanceInFeet = calculateDistance(device['rssi'],
+          /* double distanceInFeet = calculateDistance(device['rssi'],
               txPower: -59, pathLossExponent: 2.5);
           if (distanceInFeet <= 3.0) {
             devices.add(device['name']);
@@ -534,7 +535,7 @@ class DashboardProvider extends BaseProvider {
 
         deviceWithIn3Feet.addAll(devices);
 
-       /* if (deviceWithIn3Feet.isEmpty) {
+        /* if (deviceWithIn3Feet.isEmpty) {
           deviceWithIn3Feet.addAll(devices);
         } else {
           deviceWithIn3Feet.retainWhere((item) => devices.contains(item));
@@ -585,13 +586,12 @@ class DashboardProvider extends BaseProvider {
     return " ";
   }
 
-
-
-
-
   Future<void> sendEmail(List<String> deviceWithIn3Feet) async {
+    if (emailId.isEmpty) {
+      return;
+    }
     try {
-      var model = await api.sendEmail(emailId,deviceWithIn3Feet);
+      var model = await api.sendEmail(emailId, deviceWithIn3Feet);
     } on FetchDataException catch (e) {
       debugPrint("Error $e");
     } on SocketException catch (e) {

@@ -77,7 +77,7 @@ class OtpViewState extends State<OtpView> {
                   children: [
                     Text(
                       "OTP Verification",
-                      style: ViewDecoration.textStyleBoldUrbanist(kBlackColor, 30.sp),
+                      style: ViewDecoration.textStyleBoldUrbanist(kBlackColor, 30),
                     ),
                     SizedBox(
                       height: 8.h,
@@ -85,7 +85,7 @@ class OtpViewState extends State<OtpView> {
                     Text(
                       "Enter the verification code we just sent on your mobile number.",
                       style:
-                          ViewDecoration.textStyleMediumUrbanist(kColor838BA1, 16.sp),
+                          ViewDecoration.textStyleMediumUrbanist(kColor838BA1, 16),
                     ),
                     SizedBox(
                       height: 32.h,
@@ -94,7 +94,7 @@ class OtpViewState extends State<OtpView> {
                       length: 6,
                       width: 1.sw,
                       fieldWidth: (1.sw) / 8,
-                      style: ViewDecoration.textStyleBold(kBlackColor, 22.sp),
+                      style: ViewDecoration.textStyleBold(kBlackColor, 22),
                       textFieldAlignment: MainAxisAlignment.spaceBetween,
                       fieldStyle: FieldStyle.box,
                       onCompleted: (pin) {
@@ -145,14 +145,14 @@ class OtpViewState extends State<OtpView> {
                             Text(
                               "Didn’t received code? ",
                               style: ViewDecoration.textStyleMedium(
-                                  kBlackColor, 18.sp),
+                                  kBlackColor, 18),
                             ),
                             Text(
                               _start == 0
                                   ? "Resend"
                                   : "Resend code after $_start seconds",
                               style: ViewDecoration.textStyleMedium(
-                                  kColor35C2C1, 15.sp),
+                                  kColor35C2C1, 15),
                             ),
                           ],
                         ),

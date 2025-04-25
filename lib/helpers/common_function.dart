@@ -43,9 +43,9 @@ class CommonFunction {
         showSettings
             ? GestureDetector(
                 onTap: onSettingsPress,
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w),
-                  child: const ImageView(
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: ImageView(
                     path: settings,
                   ),
                 ),
@@ -55,7 +55,7 @@ class CommonFunction {
             ? GestureDetector(
                 onTap: onNextClick,
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24.w),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Center(
                     child: Text(
                       'Next',

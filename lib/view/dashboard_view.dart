@@ -98,8 +98,9 @@ class DashboardViewState extends State<DashboardView>
                             child: Center(
                               child: Text(
                                 "Scanning in progress, please check details on your phone",
+                                textAlign: TextAlign.center,
                                 style: ViewDecoration.textStyleSemiBold(
-                                    kBlackColor, 18.sp),
+                                    kBlackColor, 18),
                               ),
                             ),
                           ),
@@ -134,7 +135,7 @@ class DashboardViewState extends State<DashboardView>
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: kBlackColor.withOpacity(.65),
+                                      color: kBlackColor.withValues(alpha: .65),
                                       spreadRadius: 0,
                                       blurRadius: 2,
                                       offset: const Offset(0, 5),
@@ -151,13 +152,13 @@ class DashboardViewState extends State<DashboardView>
                                                 'Scanning',
                                                 style: ViewDecoration
                                                     .textStyleSemiBold(
-                                                        kWhiteColor, 16.sp),
+                                                        kWhiteColor, 16),
                                               ),
                                               Text(
                                                 '...',
                                                 style: ViewDecoration
                                                     .textStyleSemiBold(
-                                                        kWhiteColor, 16.sp),
+                                                        kWhiteColor, 16),
                                               )
                                                   .animate(
                                                     onPlay: (controller) =>
@@ -173,89 +174,86 @@ class DashboardViewState extends State<DashboardView>
                                             'Stopped',
                                             style: ViewDecoration
                                                 .textStyleSemiBold(
-                                                    kWhiteColor, 16.sp),
+                                                    kWhiteColor, 16),
                                           )),
                               ),
                             ),
                           ),
-                          SizedBox(
-                            height: 16.h,
+                          const SizedBox(
+                            height: 32,
                           ),
-                          SizedBox(
-                            width: 1.sw / 2,
-                            child: Column(
-                              children: [
-                                provider.locationList.isNotEmpty
-                                    ? DropdownButtonFormField(
-                                        isExpanded: true,
-                                        value: provider.selectedLocation,
-                                        decoration: const InputDecoration(
-                                          labelText: 'Select a Location',
-                                          border: OutlineInputBorder(),
-                                        ),
-                                        items:
-                                            provider.locationList.map((data) {
-                                          return DropdownMenuItem(
-                                            value: data?.id,
-                                            child: Text(
-                                              data?.data()['locationName'],
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          );
-                                        }).toList(),
-                                        onChanged: provider.isScanning
-                                            ? null
-                                            : (dynamic value) {
-                                                provider.selectedLocation =
-                                                    value;
-                                              })
-                                    : Globals.firebaseUser?.uid != null
-                                        ? TextButton(
-                                            onPressed: () {
-                                              context
-                                                  .pushNamed(
-                                                      AppPaths.addLocationView)
-                                                  .then((id) async {
-                                                await provider
-                                                    .getLocationName()
-                                                    .then((__) {
-                                                  if (id != null) {
-                                                    provider.selectedLocation =
-                                                        id.toString();
-                                                  }
-                                                });
+                          Column(
+                            children: [
+                              provider.locationList.isNotEmpty
+                                  ? DropdownButtonFormField(
+                                      isExpanded: true,
+                                      value: provider.selectedLocation,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Select a Location',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      items:
+                                          provider.locationList.map((data) {
+                                        return DropdownMenuItem(
+                                          value: data?.id,
+                                          child: Text(
+                                            data?.data()['locationName'],
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        );
+                                      }).toList(),
+                                      onChanged: provider.isScanning
+                                          ? null
+                                          : (dynamic value) {
+                                              provider.selectedLocation =
+                                                  value;
+                                            })
+                                  : Globals.firebaseUser?.uid != null
+                                      ? TextButton(
+                                          onPressed: () {
+                                            context
+                                                .pushNamed(
+                                                    AppPaths.addLocationView)
+                                                .then((id) async {
+                                              await provider
+                                                  .getLocationName()
+                                                  .then((__) {
+                                                if (id != null) {
+                                                  provider.selectedLocation =
+                                                      id.toString();
+                                                }
                                               });
-                                            },
-                                            child: Text('ADD LOCATION',
-                                                style: ViewDecoration
-                                                    .textStyleSemiBold(
-                                                        kColor0294EA,
-                                                        22,
-                                                        true)),
-                                          )
-                                        : const SizedBox(),
-                                SizedBox(
-                                  height: 12.h,
-                                ),
-                                _itemBuilder(
-                                    'Last Scan :',
-                                    provider.lastScan == null
-                                        ? ''
-                                        : CommonFunction.getDateFromTimeStamp(
-                                            provider.lastScan!,
-                                            'MM-dd-yyyy HH:mm')),
-                                SizedBox(
-                                  height: 12.h,
-                                ),
-                                _itemBuilder(
-                                    'Next Scan :',
-                                    provider.nextScan == null
-                                        ? ''
-                                        : CommonFunction.getDateFromTimeStamp(
-                                            provider.nextScan!,
-                                            'MM-dd-yyyy HH:mm')),
-                              ],
-                            ),
+                                            });
+                                          },
+                                          child: Text('ADD LOCATION',
+                                              style: ViewDecoration
+                                                  .textStyleSemiBold(
+                                                      kColor0294EA,
+                                                      22,
+                                                      true)),
+                                        )
+                                      : const SizedBox(),
+                              SizedBox(
+                                height: 12.h,
+                              ),
+                              _itemBuilder(
+                                  'Last Scan :',
+                                  provider.lastScan == null
+                                      ? ''
+                                      : CommonFunction.getDateFromTimeStamp(
+                                          provider.lastScan!,
+                                          'MM-dd-yyyy HH:mm')),
+                              SizedBox(
+                                height: 12.h,
+                              ),
+                              _itemBuilder(
+                                  'Next Scan :',
+                                  provider.nextScan == null
+                                      ? ''
+                                      : CommonFunction.getDateFromTimeStamp(
+                                          provider.nextScan!,
+                                          'MM-dd-yyyy HH:mm')),
+                            ],
                           ),
                           SizedBox(
                             height: 20.h,
@@ -349,13 +347,13 @@ class DashboardViewState extends State<DashboardView>
         Text(
           title,
           style: ViewDecoration.textStyleSemiBold(
-              kBlackColor.withOpacity(.6), 22.sp),
+              kBlackColor.withValues(alpha: .6), 16),
         ),
         SizedBox(
           width: 16.w,
         ),
         Text(subTitle,
-            style: ViewDecoration.textStyleSemiBold(kBlackColor, 22.sp)),
+            style: ViewDecoration.textStyleSemiBold(kBlackColor, 16)),
       ],
     );
   }

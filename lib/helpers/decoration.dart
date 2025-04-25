@@ -32,7 +32,7 @@ class ViewDecoration {
       isDense: true,
       contentPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
       hintText: hintText,
-      hintStyle: ViewDecoration.textStyleMedium(kColor838BA1, 20.sp),
+      hintStyle: ViewDecoration.textStyleMedium(kColor838BA1, 20),
       border: InputBorder.none,
       focusedBorder: InputBorder.none,
       enabledBorder: InputBorder.none,

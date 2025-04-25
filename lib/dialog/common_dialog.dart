@@ -47,7 +47,7 @@ class CommonDialogState extends State<CommonDialog> {
                           widget.description??'',
                           textAlign: TextAlign.center,
                           style: ViewDecoration.textStyleSemiBold(
-                              kBlackColor, 18.sp),
+                              kBlackColor, 18),
                         ),
                       ),
                       SizedBox(
@@ -76,7 +76,7 @@ class CommonDialogState extends State<CommonDialog> {
                                 "Confirm",
                                 textAlign: TextAlign.center,
                                 style: ViewDecoration.textStyleMedium(
-                                    Colors.white, 14.sp),
+                                    Colors.white, 14),
                               ),
                             ),
                           )),
@@ -106,7 +106,7 @@ class CommonDialogState extends State<CommonDialog> {
                               child: Text(
                                 'Cancel',
                                 style: ViewDecoration.textStyleMedium(
-                                    Theme.of(context).primaryColor, 14.sp),
+                                    Theme.of(context).primaryColor, 14),
                                 textAlign: TextAlign.center,
                               ),
                             ),
