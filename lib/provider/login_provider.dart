@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:ai_defender_tablet/provider/base_provider.dart';
@@ -12,6 +13,7 @@ import '../helpers/shared_pref.dart';
 import '../helpers/toast_helper.dart';
 import '../models/user_model.dart';
 import '../routes.dart';
+import '../services/fetch_data_expection.dart';
 import '../view/account_reinstate_view.dart';
 
 class LoginProvider extends BaseProvider {
@@ -67,7 +69,7 @@ class LoginProvider extends BaseProvider {
         });
   }
 
-  Future<void> loginWithCompanyId(
+  /*Future<void> loginWithCompanyId(
       String companyId, BuildContext context) async {
     loginLoader = true;
     await Globals.userReference.doc(companyId).get().then((doc) async {
@@ -96,5 +98,38 @@ class LoginProvider extends BaseProvider {
       loginLoader = false;
       debugPrint("error: $error");
     });
+  }*/
+
+  Future<void> loginWithCompanyId(
+      String companyId, BuildContext context) async {
+    loginLoader = true;
+    try {
+      var model = await api.getUserData(companyId);
+      loginLoader = false;
+      if (model != null) {
+        if (model.isDeleted != null && model.isDeleted!) {
+          setState(ViewState.idle);
+          context.pop();
+          showDialog(
+              context: Globals.navigatorKey.currentContext!,
+              builder: (_) => BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                    child: AccountReInstateView(model),
+                  ));
+        } else {
+          SharedPref.prefs?.setBool(SharedPref.isLoggedIn, true);
+          SharedPref.prefs?.setString(SharedPref.userId, companyId);
+          context.go(AppPaths.download);
+        }
+      } else {
+        ToastHelper.showErrorMessage('Company Id Not Exist.');
+      }
+    } on FetchDataException catch (e) {
+      loginLoader = false;
+      ToastHelper.showErrorMessage('Company Id Not Exist.');
+    } on SocketException catch (e) {
+      loginLoader = false;
+      ToastHelper.showErrorMessage('Company Id Not Exist.');
+    }
   }
 }

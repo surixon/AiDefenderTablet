@@ -9,7 +9,6 @@ import 'package:ai_defender_tablet/helpers/toast_helper.dart';
 import 'package:ai_defender_tablet/models/ai_defender_model.dart';
 import 'package:ai_defender_tablet/provider/base_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cron/cron.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -258,12 +257,12 @@ class DashboardProvider extends BaseProvider {
       'dateOnly':
           CommonFunction.getDateFromTimeStamp(DateTime.now(), 'yyyyMMdd')
     };
-    await Globals.scanReference.doc().set(request);
+    //await Globals.scanReference.doc().set(request);
+    await api.postScanData(request);
   }
 
+
   /*Future<void> updateWifiName() async {
-
-
     await NetworkInfo().getWifiName().then((wifiName) async {
       debugPrint("Wifi Name $wifiName");
       debugPrint("User ID ${SharedPref.prefs?.getString(SharedPref.userId)}");
@@ -299,7 +298,6 @@ class DashboardProvider extends BaseProvider {
       });
     }
 
-    debugPrint("btScan $btScan");
     if (btScan) {
       checkIsBluetoothDeviceWithIn3Feet();
     }
@@ -501,6 +499,67 @@ class DashboardProvider extends BaseProvider {
   }
 
   Future<void> checkIsBluetoothDeviceWithIn3Feet() async {
+    List<String> deviceWithIn3Feet = [];
+    await Globals.scanReference
+        .where('uid', isEqualTo: SharedPref.prefs?.getString(SharedPref.userId))
+        .where('locationId', isEqualTo: selectedLocation)
+        .where('bluetoothScan', isNotEqualTo: null)
+        .where('dateTime',
+            isGreaterThan: Timestamp.fromDate(
+                DateTime.now().subtract(const Duration(hours: 2))))
+        .orderBy('dateTime', descending: true)
+        .get()
+        .then((snapshot) async {
+      debugPrint("snapshot length ${snapshot.docs.length}");
+
+      /* if (snapshot.docs.length < 6) {
+        return;
+      }*/
+
+      if (snapshot.docs.length < 2) {
+        return;
+      }
+
+      await Future.forEach(snapshot.docs, (doc) async {
+        List<String> devices = [];
+        await Future.forEach(doc.data()["bluetoothScan"], (dynamic device) {
+          /* double distanceInFeet = calculateDistance(device['rssi'],
+              txPower: -59, pathLossExponent: 2.5);
+          if (distanceInFeet <= 3.0) {
+            devices.add(device['name']);
+          }*/
+          devices.add(device['name']);
+        });
+
+        deviceWithIn3Feet.addAll(devices);
+
+        /* if (deviceWithIn3Feet.isEmpty) {
+          deviceWithIn3Feet.addAll(devices);
+        } else {
+          deviceWithIn3Feet.retainWhere((item) => devices.contains(item));
+          debugPrint("Updated List deviceWithIn3Feet: $deviceWithIn3Feet");
+        }*/
+      });
+
+      deviceWithIn3Feet.retainWhere((item) => !hideNotification.contains(item));
+
+      if (deviceWithIn3Feet.isNotEmpty) {
+        List<String> btDevices = [];
+
+        await Future.forEach(deviceWithIn3Feet, (macAddress) {
+          String macPrefix = macAddress.replaceAll(RegExp(r'[:\-]'), "");
+          btDevices.add(
+              prefixes?[macPrefix.substring(0, 6).toUpperCase()] ?? macAddress);
+        });
+
+        await sendNotification.sendNotification('bt_device', 'Ai Defender',
+            "BT $deviceWithIn3Feet in range more than 2 hours", fcmToken);
+        await sendEmail(deviceWithIn3Feet);
+      }
+    });
+  }
+
+  Future<void> checkLast2HoursActiveDevice() async {
     List<String> deviceWithIn3Feet = [];
     await Globals.scanReference
         .where('uid', isEqualTo: SharedPref.prefs?.getString(SharedPref.userId))

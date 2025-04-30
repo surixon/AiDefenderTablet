@@ -34,7 +34,7 @@ class WifiViewState extends State<WifiView> {
           // provider.overlayPermission(context);
           //Commented Due to Linux Issue
           await provider.checkLocationServices(context);
-          //provider.lifeCycleEventHandler();
+          provider.lifeCycleEventHandler();
         },
         builder: (context, provider, _) => Scaffold(
               backgroundColor: kBgColor,

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:ai_defender_tablet/models/user_model.dart';
 import 'package:dio/dio.dart';
 import '../constants/api_constants.dart';
 import '../locator.dart';
@@ -92,6 +93,41 @@ $htmlContent
       } else {
         return false;
       }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw FetchDataException('');
+      } else {
+        throw const SocketException("Socket Exception");
+      }
+    }
+  }
+
+  Future<UserModel?> getUserData(
+    String id,
+  ) async {
+    try {
+      dio.options.headers["Accept"] = ApiConstants.applicationJson;
+      var response = await dio.get(
+          "${ApiConstants.firebaseBaseUrl}/${ApiConstants.usersCollection}/$id");
+
+      return UserModel.fromSnapshot(json.decode(response.toString()));
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw FetchDataException('');
+      } else {
+        throw const SocketException("Socket Exception");
+      }
+    }
+  }
+
+  Future<UserModel?> postScanData(Map<String, Object?> request) async {
+    try {
+      dio.options.headers["Accept"] = ApiConstants.applicationJson;
+      var response = await dio.post(
+          "${ApiConstants.firebaseBaseUrl}/${ApiConstants.scanCollection}",
+          data: request);
+
+      return UserModel.fromSnapshot(json.decode(response.toString()));
     } on DioException catch (e) {
       if (e.response != null) {
         throw FetchDataException('');

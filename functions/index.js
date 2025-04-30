@@ -11,6 +11,7 @@ const {onRequest} = require("firebase-functions/v2/https");
 const sgMail = require("@sendgrid/mail");
 const admin = require("firebase-admin");
 const {defineSecret} = require("firebase-functions/params");
+const functions = require("firebase-functions");
 
 const SENDGRID_API_KEY = defineSecret("SENDGRID_API_KEY");
 
@@ -86,4 +87,20 @@ exports.sendEmail = onRequest(
         return res.status(500).send({success: false, error: error.toString()});
       }
     });
+
+exports.generateCustomToken = functions.https.onRequest(async (req, res) => {
+  const uid = req.body.uid;
+
+  if (!uid) {
+    return res.status(400).json({error: "UID required"});
+  }
+
+  try {
+    const customToken = await admin.auth().createCustomToken(uid);
+    res.json({token: customToken});
+  } catch (error) {
+    console.error("Error creating custom token:", error);
+    res.status(500).json({error: "Internal error"});
+  }
+});
 
