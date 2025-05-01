@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'package:ai_defender_tablet/constants/api_constants.dart';
 import 'package:ai_defender_tablet/enums/viewstate.dart';
 import 'package:ai_defender_tablet/helpers/common_function.dart';
 import 'package:ai_defender_tablet/helpers/shared_pref.dart';
@@ -249,7 +250,7 @@ class DashboardProvider extends BaseProvider {
     });
 
     var request = {
-      'dateTime': DateTime.now(),
+      'dateTime': DateTime.now().toUtc().toIso8601String(),
       'uid': SharedPref.prefs?.getString(SharedPref.userId),
       'scan': scanList,
       'locationId': selectedLocation,
@@ -258,9 +259,16 @@ class DashboardProvider extends BaseProvider {
           CommonFunction.getDateFromTimeStamp(DateTime.now(), 'yyyyMMdd')
     };
     //await Globals.scanReference.doc().set(request);
-    await api.postScanData(request);
-  }
 
+    debugPrint("REQUEST $request");
+
+
+    final Map<String, dynamic> firestorePayload = {
+      'fields': request.map((key, value) => MapEntry(key, toFirestoreFields(value))),
+    };
+
+    await api.postScanData(firestorePayload);
+  }
 
   /*Future<void> updateWifiName() async {
     await NetworkInfo().getWifiName().then((wifiName) async {
@@ -561,63 +569,62 @@ class DashboardProvider extends BaseProvider {
 
   Future<void> checkLast2HoursActiveDevice() async {
     List<String> deviceWithIn3Feet = [];
-    await Globals.scanReference
-        .where('uid', isEqualTo: SharedPref.prefs?.getString(SharedPref.userId))
-        .where('locationId', isEqualTo: selectedLocation)
-        .where('bluetoothScan', isNotEqualTo: null)
-        .where('dateTime',
-            isGreaterThan: Timestamp.fromDate(
-                DateTime.now().subtract(const Duration(hours: 2))))
-        .orderBy('dateTime', descending: true)
-        .get()
-        .then((snapshot) async {
-      debugPrint("snapshot length ${snapshot.docs.length}");
 
-      /* if (snapshot.docs.length < 6) {
-        return;
-      }*/
-
-      if (snapshot.docs.length < 2) {
-        return;
+    final Map<String, dynamic> body = {
+      "structuredQuery": {
+        "from": [
+          {"collectionId": ApiConstants.scanCollection}
+        ],
+        "where": {
+          "compositeFilter": {
+            "op": "AND",
+            "filters": [
+              {
+                "fieldFilter": {
+                  "field": {"fieldPath": "uid"},
+                  "op": "EQUAL",
+                  "value": {
+                    "stringValue":
+                        SharedPref.prefs?.getString(SharedPref.userId)
+                  }
+                }
+              },
+              {
+                "fieldFilter": {
+                  "field": {"fieldPath": "locationId"},
+                  "op": "EQUAL",
+                  "value": {"stringValue": selectedLocation}
+                }
+              },
+              {
+                "fieldFilter": {
+                  "field": {"fieldPath": "bluetoothScan"},
+                  "op": "IS_NOT_NULL"
+                }
+              },
+              {
+                "fieldFilter": {
+                  "field": {"fieldPath": "dateTime"},
+                  "op": "GREATER_THAN",
+                  "value": {
+                    "timestampValue": Timestamp.fromDate(
+                        DateTime.now().subtract(const Duration(hours: 2)))
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "orderBy": [
+          {
+            "field": {"fieldPath": "dateTime"},
+            "direction": "DESCENDING"
+          }
+        ]
       }
+    };
 
-      await Future.forEach(snapshot.docs, (doc) async {
-        List<String> devices = [];
-        await Future.forEach(doc.data()["bluetoothScan"], (dynamic device) {
-          /* double distanceInFeet = calculateDistance(device['rssi'],
-              txPower: -59, pathLossExponent: 2.5);
-          if (distanceInFeet <= 3.0) {
-            devices.add(device['name']);
-          }*/
-          devices.add(device['name']);
-        });
-
-        deviceWithIn3Feet.addAll(devices);
-
-        /* if (deviceWithIn3Feet.isEmpty) {
-          deviceWithIn3Feet.addAll(devices);
-        } else {
-          deviceWithIn3Feet.retainWhere((item) => devices.contains(item));
-          debugPrint("Updated List deviceWithIn3Feet: $deviceWithIn3Feet");
-        }*/
-      });
-
-      deviceWithIn3Feet.retainWhere((item) => !hideNotification.contains(item));
-
-      if (deviceWithIn3Feet.isNotEmpty) {
-        List<String> btDevices = [];
-
-        await Future.forEach(deviceWithIn3Feet, (macAddress) {
-          String macPrefix = macAddress.replaceAll(RegExp(r'[:\-]'), "");
-          btDevices.add(
-              prefixes?[macPrefix.substring(0, 6).toUpperCase()] ?? macAddress);
-        });
-
-        await sendNotification.sendNotification('bt_device', 'Ai Defender',
-            "BT $deviceWithIn3Feet in range more than 2 hours", fcmToken);
-        await sendEmail(deviceWithIn3Feet);
-      }
-    });
+    api.getScanData(body);
   }
 
   double calculateDistance(int rssi,
@@ -655,6 +662,38 @@ class DashboardProvider extends BaseProvider {
       debugPrint("Error $e");
     } on SocketException catch (e) {
       debugPrint("Error $e");
+    }
+  }
+
+  Map<String, dynamic> toFirestoreFields(dynamic data) {
+    if (data == null) {
+      return {'nullValue': null};
+    } else if (data is String) {
+      return {'stringValue': data};
+    } else if (data is int) {
+      return {'integerValue': data.toString()};
+    } else if (data is double) {
+      return {'doubleValue': data};
+    } else if (data is bool) {
+      return {'booleanValue': data};
+    } else if (data is DateTime) {
+      return {'timestampValue': data.toUtc().toIso8601String()};
+    } else if (data is List) {
+      return {
+        'arrayValue': {
+          'values': data.map((item) => toFirestoreFields(item)).toList(),
+        }
+      };
+    } else if (data is Map<String, dynamic>) {
+      return {
+        'mapValue': {
+          'fields': data.map(
+                (key, value) => MapEntry(key, toFirestoreFields(value)),
+          )
+        }
+      };
+    } else {
+      throw UnsupportedError('Unsupported data type: ${data.runtimeType}');
     }
   }
 }

@@ -23,6 +23,5 @@ class UserModel {
     email = data["email"];
     fcm = data["fcm"];
     isDeleted = data["isDeleted"];
-    createdAt = data["createdAt"];
   }
 }

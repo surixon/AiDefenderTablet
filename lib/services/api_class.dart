@@ -120,14 +120,26 @@ $htmlContent
     }
   }
 
-  Future<UserModel?> postScanData(Map<String, Object?> request) async {
+  Future<List<dynamic>> getScanData(Map<String, dynamic> body) async {
     try {
       dio.options.headers["Accept"] = ApiConstants.applicationJson;
-      var response = await dio.post(
+      var response = await dio.get("${ApiConstants.firebaseBaseUrl}:runQuery");
+      return json.decode(response.data);
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw FetchDataException('');
+      } else {
+        throw const SocketException("Socket Exception");
+      }
+    }
+  }
+
+  Future<void> postScanData(Map<String, Object?> request) async {
+    try {
+      dio.options.headers["Accept"] = ApiConstants.applicationJson;
+      await dio.post(
           "${ApiConstants.firebaseBaseUrl}/${ApiConstants.scanCollection}",
           data: request);
-
-      return UserModel.fromSnapshot(json.decode(response.toString()));
     } on DioException catch (e) {
       if (e.response != null) {
         throw FetchDataException('');
