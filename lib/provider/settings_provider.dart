@@ -17,7 +17,8 @@ class SettingsProvider extends BaseProvider {
     if (Globals.auth.currentUser != null) {
       list = ["Location", 'Bluetooth', 'WiFi', 'Logout'];
     } else {
-      list = ['Bluetooth', 'WiFi', 'Logout'];
+      //list = ['Bluetooth', 'WiFi', 'Logout'];
+      list = ["Location", 'Bluetooth', 'WiFi', 'Logout'];
     }
   }
 

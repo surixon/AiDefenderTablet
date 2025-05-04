@@ -3,6 +3,7 @@ class ApiConstants {
   static const String projectId = "ai-defender-d74f2";
   static const String usersCollection = "users";
   static const String scanCollection = "scan";
+  static const String locationsCollection = "locations";
 
   static const String macLookupBaseUrl = "https://api.maclookup.app/v2/macs";
   static const String baseUrl = "https://api.macvendors.com";
@@ -16,4 +17,5 @@ class ApiConstants {
 
 
   static const String firebaseBaseUrl = "https://firestore.googleapis.com/v1/projects/$projectId/databases/(default)/documents";
+  static const String locationUrl = "$firebaseBaseUrl/$locationsCollection";
 }

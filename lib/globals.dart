@@ -26,4 +26,41 @@ class Globals {
   static final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
   static GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+  static Map<String, dynamic> getLocationQuery(String locationName) {
+    return {
+      "structuredQuery": {
+        "from": [
+          {"collectionId": "locations"}
+        ],
+        "where": {
+          "fieldFilter": {
+            "field": {"fieldPath": "locationName"},
+            "op": "EQUAL",
+            "value": {"stringValue": locationName}
+          }
+        }
+      }
+    };
+  }
+
+  static Map<String, dynamic> updateLocationQuery(DateTime lastScan) {
+    return {
+      "fields": {
+        "lastScan": {"timestampValue": lastScan.toUtc().toIso8601String()},
+        "nextScan": {"nullValue": null},
+        "isScan": {"booleanValue": false}
+      }
+    };
+  }
+
+  static Map<String, dynamic> addLocationQuery(
+      String userId, String locationName) {
+    return {
+      "fields": {
+        "userId": {"stringValue": userId},
+        "locationName": {"stringValue": locationName}
+      }
+    };
+  }
 }

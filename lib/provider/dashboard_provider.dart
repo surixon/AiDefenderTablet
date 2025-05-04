@@ -262,9 +262,9 @@ class DashboardProvider extends BaseProvider {
 
     debugPrint("REQUEST $request");
 
-
     final Map<String, dynamic> firestorePayload = {
-      'fields': request.map((key, value) => MapEntry(key, toFirestoreFields(value))),
+      'fields':
+          request.map((key, value) => MapEntry(key, toFirestoreFields(value))),
     };
 
     await api.postScanData(firestorePayload);
@@ -344,10 +344,20 @@ class DashboardProvider extends BaseProvider {
   stopCron() async {
     timer?.cancel();
     isScanning = false;
-    await Globals.locationReference
+
+    try {
+      api.updateLocation(
+          selectedLocation!, Globals.updateLocationQuery(lastScan!));
+    } on FetchDataException catch (e) {
+      ToastHelper.showErrorMessage('$e');
+    } on SocketException catch (e) {
+      ToastHelper.showErrorMessage('$e');
+    }
+
+    /* await Globals.locationReference
         .doc(selectedLocation)
         .update({'lastScan': lastScan, 'nextScan': null, 'isScan': false}).then(
-            (value) {});
+            (value) {});*/
   }
 
   String getNiceHexArray(List<int> bytes) {
@@ -379,6 +389,8 @@ class DashboardProvider extends BaseProvider {
 
   Future<void> getLocationName() async {
     String deviceId = await CommonFunction.getDeviceId();
+
+    debugPrint("USERID ${SharedPref.prefs?.getString(SharedPref.userId)}");
 
     await Globals.locationReference
         .where('userId',
@@ -688,7 +700,7 @@ class DashboardProvider extends BaseProvider {
       return {
         'mapValue': {
           'fields': data.map(
-                (key, value) => MapEntry(key, toFirestoreFields(value)),
+            (key, value) => MapEntry(key, toFirestoreFields(value)),
           )
         }
       };

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:ai_defender_tablet/models/user_model.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
 import '../constants/api_constants.dart';
 import '../locator.dart';
 import '../models/mac_address_model.dart';
@@ -134,6 +135,51 @@ $htmlContent
     }
   }
 
+  Future<List<dynamic>> getLocation(Map<String, dynamic> body) async {
+    try {
+      dio.options.headers["Accept"] = ApiConstants.applicationJson;
+      var response = await dio.post("${ApiConstants.firebaseBaseUrl}:runQuery",
+          data: body);
+      return parseLocationDocuments(json.encode(response.data));
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw FetchDataException('');
+      } else {
+        throw const SocketException("Socket Exception");
+      }
+    }
+  }
+
+  Future<Map<String, dynamic>> addLocation(Map<String, dynamic> body) async {
+    try {
+      dio.options.headers["Accept"] = ApiConstants.applicationJson;
+      var response = await dio.post(ApiConstants.locationUrl, data: body);
+      return response.data;
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw FetchDataException('');
+      } else {
+        throw const SocketException("Socket Exception");
+      }
+    }
+  }
+
+  Future<List<dynamic>> updateLocation(
+      String locationId, Map<String, dynamic> request) async {
+    try {
+      dio.options.headers["Accept"] = ApiConstants.applicationJson;
+      var response = await dio.patch("${ApiConstants.locationUrl}/$locationId",
+          data: request);
+      return json.decode(response.data);
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw FetchDataException('');
+      } else {
+        throw const SocketException("Socket Exception");
+      }
+    }
+  }
+
   Future<void> postScanData(Map<String, Object?> request) async {
     try {
       dio.options.headers["Accept"] = ApiConstants.applicationJson;
@@ -147,5 +193,28 @@ $htmlContent
         throw const SocketException("Socket Exception");
       }
     }
+  }
+
+  List<Map<String, dynamic>> parseLocationDocuments(String responseBody) {
+    final List<dynamic> jsonList = json.decode(responseBody);
+
+    return jsonList
+        .map<Map<String, dynamic>>((entry) {
+          final doc = entry['document'];
+          if (doc == null) return {}; // Skip if document is missing
+
+          final fields = doc['fields'];
+          if (fields == null) return {}; // Skip if fields are missing
+
+          return {
+            'id': doc['name']?.split('/')?.last,
+            'userId': fields['userId']?['stringValue'],
+            'locationName': fields['locationName']?['stringValue'],
+            'createTime': doc['createTime'],
+            'updateTime': doc['updateTime'],
+          };
+        })
+        .where((map) => map.isNotEmpty) // Filter out empty maps
+        .toList();
   }
 }
