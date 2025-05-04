@@ -56,9 +56,11 @@ class SplashViewState extends State<SplashView> {
   void navigateToDashboard() {
     var isLoggedIn = SharedPref.prefs!.getBool(SharedPref.isLoggedIn) ?? false;
 
+    //Linux Change
+    /*Timer(const Duration(seconds: 2),
+        () => context.go(isLoggedIn ? AppPaths.dashboard : AppPaths.wifi));*/
+
     Timer(const Duration(seconds: 2),
-        () => context.go(isLoggedIn ? AppPaths.dashboard : AppPaths.wifi));
+        () => context.go(isLoggedIn ? AppPaths.dashboard : AppPaths.login));
   }
 }
-
-
