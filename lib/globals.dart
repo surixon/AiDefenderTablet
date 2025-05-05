@@ -54,6 +54,25 @@ class Globals {
     };
   }
 
+  static Map<String, dynamic> updateLastAndNextScan(
+      DateTime lastScan, DateTime nextScan) {
+    return {
+      "fields": {
+        "lastScan": {"timestampValue": lastScan.toUtc().toIso8601String()},
+        "nextScan": {"timestampValue": nextScan.toUtc().toIso8601String()},
+        "isScan": {"booleanValue": true}
+      }
+    };
+  }
+
+  static Map<String, dynamic> updateLocationNameQuery(String locationName) {
+    return {
+      "fields": {
+        "locationName": {"stringValue": locationName}
+      }
+    };
+  }
+
   static Map<String, dynamic> addLocationQuery(
       String userId, String locationName) {
     return {

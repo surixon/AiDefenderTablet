@@ -110,34 +110,4 @@ class AddEditLocationViewState extends State<AddEditLocationView> {
               ),
             ));
   }
-
-  Widget _itemBuilder(
-      BuildContext context, int index, Map<String, dynamic> data, String id) {
-    return GestureDetector(
-      onTap: () {
-        context.pop(id);
-      },
-      child: Container(
-        decoration: BoxDecoration(
-            border: Border.all(),
-            borderRadius: const BorderRadius.all(Radius.circular(8))),
-        padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 12.0),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                "${data['locationName']}",
-                style: ViewDecoration.textStyleSemiBold(kBlackColor, 18),
-              ),
-            ),
-            IconButton(onPressed: () {}, icon: const Icon(Icons.edit)),
-            SizedBox(
-              width: 16.w,
-            ),
-            IconButton(onPressed: () {}, icon: const Icon(Icons.delete)),
-          ],
-        ),
-      ),
-    );
-  }
 }

@@ -76,11 +76,8 @@ class DashboardProvider extends BaseProvider {
     lastScan = DateTime.now();
     nextScan = lastScan?.add(const Duration(hours: 1));
 
-    await Globals.locationReference.doc(selectedLocation).update({
-      'lastScan': lastScan,
-      'nextScan': nextScan,
-      'isScan': true
-    }).then((value) {});
+    await api.updateLocation(
+        selectedLocation!, Globals.updateLastAndNextScan(lastScan!, nextScan!));
 
     final scanner = LanScanner(debugLogging: true);
     final hosts = await scanner.quickIcmpScanAsync(
@@ -344,7 +341,6 @@ class DashboardProvider extends BaseProvider {
   stopCron() async {
     timer?.cancel();
     isScanning = false;
-
     try {
       api.updateLocation(
           selectedLocation!, Globals.updateLocationQuery(lastScan!));
@@ -353,11 +349,6 @@ class DashboardProvider extends BaseProvider {
     } on SocketException catch (e) {
       ToastHelper.showErrorMessage('$e');
     }
-
-    /* await Globals.locationReference
-        .doc(selectedLocation)
-        .update({'lastScan': lastScan, 'nextScan': null, 'isScan': false}).then(
-            (value) {});*/
   }
 
   String getNiceHexArray(List<int> bytes) {

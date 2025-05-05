@@ -164,13 +164,47 @@ $htmlContent
     }
   }
 
-  Future<List<dynamic>> updateLocation(
+  Future<void> updateLocation(
       String locationId, Map<String, dynamic> request) async {
     try {
       dio.options.headers["Accept"] = ApiConstants.applicationJson;
-      var response = await dio.patch("${ApiConstants.locationUrl}/$locationId",
+      dio.options.headers["Content-Type"] = ApiConstants.applicationJson;
+      var response = await dio.patch(
+          "${ApiConstants.locationUrl}/$locationId?updateMask.fieldPaths=lastScan&updateMask.fieldPaths=isScan&updateMask.fieldPaths=nextScan",
           data: request);
-      return json.decode(response.data);
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw FetchDataException('');
+      } else {
+        throw const SocketException("Socket Exception");
+      }
+    }
+  }
+
+  Future<void> updateLocationName(
+      String locationId, Map<String, dynamic> request) async {
+    try {
+      dio.options.headers["Accept"] = ApiConstants.applicationJson;
+      dio.options.headers["Content-Type"] = ApiConstants.applicationJson;
+      await dio.patch(
+          "${ApiConstants.locationUrl}/$locationId?updateMask.fieldPaths=locationName",
+          data: request);
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw FetchDataException('');
+      } else {
+        throw const SocketException("Socket Exception");
+      }
+    }
+  }
+
+  Future<void> deleteLocation(String locationId) async {
+    try {
+      dio.options.headers["Accept"] = ApiConstants.applicationJson;
+      dio.options.headers["Content-Type"] = ApiConstants.applicationJson;
+      await dio.delete(
+        "${ApiConstants.locationUrl}/$locationId",
+      );
     } on DioException catch (e) {
       if (e.response != null) {
         throw FetchDataException('');

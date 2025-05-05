@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:ai_defender_tablet/enums/viewstate.dart';
 import 'package:ai_defender_tablet/helpers/toast_helper.dart';
 import 'package:ai_defender_tablet/provider/base_provider.dart';
-import 'package:flutter/cupertino.dart';
 import '../globals.dart';
 import '../helpers/shared_pref.dart';
 import '../services/fetch_data_expection.dart';
@@ -37,11 +36,16 @@ class AddLocationProvider extends BaseProvider {
   Future<void> updateLocation(String? id, String location) async {
     setState(ViewState.busy);
 
-    await Globals.locationReference
-        .doc(id)
-        .update({'locationName': location}).then((snapshot) async {
+    try {
+      api.updateLocationName(id!, Globals.updateLocationNameQuery(location));
       ToastHelper.showMessage('Location updated successfully!');
       setState(ViewState.idle);
-    });
+    } on FetchDataException catch (e) {
+      setState(ViewState.idle);
+      ToastHelper.showErrorMessage('$e');
+    } on SocketException catch (e) {
+      setState(ViewState.idle);
+      ToastHelper.showErrorMessage('$e');
+    }
   }
 }

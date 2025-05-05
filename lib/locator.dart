@@ -2,6 +2,7 @@ import 'package:ai_defender_tablet/notifications/send_notification.dart';
 import 'package:ai_defender_tablet/provider/add_location_provider.dart';
 import 'package:ai_defender_tablet/provider/dashboard_provider.dart';
 import 'package:ai_defender_tablet/provider/download_app_provider.dart';
+import 'package:ai_defender_tablet/provider/location_provider.dart';
 import 'package:ai_defender_tablet/provider/login_provider.dart';
 import 'package:ai_defender_tablet/provider/otp_provider.dart';
 import 'package:ai_defender_tablet/provider/settings_provider.dart';
@@ -22,6 +23,7 @@ void setupLocator() {
   locator.registerFactory(() => SettingsProvider());
   locator.registerFactory(() => DownloadAppProvider());
   locator.registerFactory(() => AddLocationProvider());
+  locator.registerFactory(() => LocationProvider());
 
   locator.registerLazySingleton(() => Api());
   locator.registerLazySingleton<Dio>(() {
