@@ -73,6 +73,44 @@ class Globals {
     };
   }
 
+  static Map<String, dynamic> getLocationWhereDeviceIds(
+      String userId, String deviceId) {
+    return {
+      "structuredQuery": {
+        "from": [
+          {"collectionId": "locations"}
+        ],
+        "where": {
+          "compositeFilter": {
+            "op": "AND",
+            "filters": [
+              {
+                "fieldFilter": {
+                  "field": {"fieldPath": "userId"},
+                  "op": "EQUAL",
+                  "value": {"stringValue": userId}
+                }
+              },
+              {
+                "fieldFilter": {
+                  "field": {"fieldPath": "deviceIds"},
+                  "op": "ARRAY_CONTAINS_ANY",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {"stringValue": deviceId}
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    };
+  }
+
   static Map<String, dynamic> addLocationQuery(
       String userId, String locationName) {
     return {

@@ -138,9 +138,71 @@ $htmlContent
   Future<List<dynamic>> getLocation(Map<String, dynamic> body) async {
     try {
       dio.options.headers["Accept"] = ApiConstants.applicationJson;
+      dio.options.headers["Content-Type"] = ApiConstants.applicationJson;
       var response = await dio.post("${ApiConstants.firebaseBaseUrl}:runQuery",
           data: body);
       return parseLocationDocuments(json.encode(response.data));
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw FetchDataException('');
+      } else {
+        throw const SocketException("Socket Exception");
+      }
+    }
+  }
+
+  Future<void> removeDeviceId(String docId, String deviceId) async {
+    try {
+      var data = {
+        "writes": [
+          {
+            "transform": {
+              "document":
+                  "projects/${ApiConstants.projectId}/databases/(default)/documents/locations/$docId",
+              "fieldTransforms": [
+                {
+                  "fieldPath": "deviceIds",
+                  "removeAllFromArray": {
+                    "values": [
+                      {"stringValue": deviceId}
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      };
+      dio.options.headers["Accept"] = ApiConstants.applicationJson;
+      dio.options.headers["Content-Type"] = ApiConstants.applicationJson;
+      await dio.post("${ApiConstants.firebaseBaseUrl}:commit", data: data);
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw FetchDataException('');
+      } else {
+        throw const SocketException("Socket Exception");
+      }
+    }
+  }
+
+  Future<void> addDeviceId(String docId, String deviceId) async {
+    try {
+      var data = {
+        "fields": {
+          "deviceIds": {
+            "arrayValue": {
+              "values": [
+                {"stringValue": deviceId}
+              ]
+            }
+          }
+        }
+      };
+      dio.options.headers["Accept"] = ApiConstants.applicationJson;
+      dio.options.headers["Content-Type"] = ApiConstants.applicationJson;
+      await dio.patch(
+          "${ApiConstants.locationUrl}/$docId?updateMask.fieldPaths=deviceIds",
+          data: data);
     } on DioException catch (e) {
       if (e.response != null) {
         throw FetchDataException('');

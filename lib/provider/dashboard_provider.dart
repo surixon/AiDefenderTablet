@@ -419,22 +419,24 @@ class DashboardProvider extends BaseProvider {
 
   Future<void> updateLocation() async {
     String deviceId = await CommonFunction.getDeviceId();
-
-    await Globals.locationReference
-        .where('userId',
-            isEqualTo: SharedPref.prefs?.getString(SharedPref.userId))
-        .where('deviceIds', arrayContainsAny: [deviceId])
-        .get()
-        .then((snapshot) async {
-          if (snapshot.docs.isNotEmpty) {
-            await Globals.locationReference.doc(snapshot.docs.first.id).update({
-              "deviceIds": FieldValue.arrayRemove([deviceId])
-            });
+    try {
+      await api
+          .getLocation(Globals.getLocationWhereDeviceIds(
+              SharedPref.prefs?.getString(SharedPref.userId) ?? '', deviceId))
+          .then((value) async {
+        if (value.isNotEmpty) {
+          final String? docId = value[0]['id'];
+          if (docId != null) {
+            await api.removeDeviceId(docId, deviceId);
           }
-          await Globals.locationReference.doc(selectedLocation).update({
-            "deviceIds": FieldValue.arrayUnion([deviceId])
-          });
-        });
+        }
+        await api.addDeviceId(selectedLocation!, deviceId);
+      });
+    } on FetchDataException catch (e) {
+      ToastHelper.showErrorMessage('$e');
+    } on SocketException catch (e) {
+      ToastHelper.showErrorMessage('$e');
+    }
   }
 
   Future<void> getUserDetails() async {
