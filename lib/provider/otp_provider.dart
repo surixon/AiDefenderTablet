@@ -7,9 +7,7 @@ import '../enums/viewstate.dart';
 import '../globals.dart';
 import '../helpers/toast_helper.dart';
 import '../helpers/shared_pref.dart';
-import '../models/user_model.dart';
 import '../routes.dart';
-import '../view/account_reinstate_view.dart';
 
 class OtpProvider extends BaseProvider {
   String verificationId = '';
@@ -84,21 +82,10 @@ class OtpProvider extends BaseProvider {
   }
 
   Future<void> createUser(BuildContext context, String fcmToken) async {
-    UserModel? model;
+
     var reference = Globals.userReference.doc(Globals.firebaseUser?.uid);
     await reference.get().then((doc) async {
       if (doc.exists) {
-        model = UserModel.fromSnapshot(doc.data() as Map<String, dynamic>);
-        if (model?.isDeleted != null && model!.isDeleted!) {
-          setState(ViewState.idle);
-          context.pop();
-          showDialog(
-              context: Globals.navigatorKey.currentContext!,
-              builder: (_) => BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-                    child: AccountReInstateView(model),
-                  ));
-        }
       } else {
         Map<String, dynamic> data = {'createdAt': DateTime.now()};
         await Globals.userReference.doc(Globals.firebaseUser?.uid).set(data);

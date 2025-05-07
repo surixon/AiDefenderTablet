@@ -2,6 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import 'constants/api_constants.dart';
+import 'helpers/shared_pref.dart';
+
 class Globals {
   const Globals._();
 
@@ -14,8 +17,6 @@ class Globals {
   static final locationReference = fireStore.collection("locations");
 
   static final notificationsReference = fireStore.collection("notifications");
-
-  static final deletedUserReference = fireStore.collection("deletedUser");
 
   static final aiDefenderReference = fireStore.collection("AIDefender");
 
@@ -44,6 +45,22 @@ class Globals {
     };
   }
 
+  static Map<String, dynamic> getLocationByUserIdQuery(String userId) {
+    return {
+      "structuredQuery": {
+        "from": [{ "collectionId": "locations"}],
+        "where": {
+          "fieldFilter": {
+            "field": { "fieldPath": "userId"},
+            "op": "EQUAL",
+            "value": { "stringValue": userId}
+          }
+        }
+      }
+    }
+    ;
+  }
+
   static Map<String, dynamic> updateLocationQuery(DateTime lastScan) {
     return {
       "fields": {
@@ -54,8 +71,8 @@ class Globals {
     };
   }
 
-  static Map<String, dynamic> updateLastAndNextScan(
-      DateTime lastScan, DateTime nextScan) {
+  static Map<String, dynamic> updateLastAndNextScan(DateTime lastScan,
+      DateTime nextScan) {
     return {
       "fields": {
         "lastScan": {"timestampValue": lastScan.toUtc().toIso8601String()},
@@ -73,8 +90,8 @@ class Globals {
     };
   }
 
-  static Map<String, dynamic> getLocationWhereDeviceIds(
-      String userId, String deviceId) {
+  static Map<String, dynamic> getLocationWhereDeviceIds(String userId,
+      String deviceId) {
     return {
       "structuredQuery": {
         "from": [
@@ -111,8 +128,8 @@ class Globals {
     };
   }
 
-  static Map<String, dynamic> addLocationQuery(
-      String userId, String locationName) {
+  static Map<String, dynamic> addLocationQuery(String userId,
+      String locationName) {
     return {
       "fields": {
         "userId": {"stringValue": userId},
@@ -120,4 +137,62 @@ class Globals {
       }
     };
   }
+
+  static Map<String, dynamic> getActiveBluetoothDevices(
+      String selectedLocation) {
+    return {
+      "structuredQuery": {
+        "from": [
+          {"collectionId": ApiConstants.scanCollection}
+        ],
+        "where": {
+          "compositeFilter": {
+            "op": "AND",
+            "filters": [
+              {
+                "fieldFilter": {
+                  "field": {"fieldPath": "uid"},
+                  "op": "EQUAL",
+                  "value": {
+                    "stringValue":
+                    SharedPref.prefs?.getString(SharedPref.userId)
+                  }
+                }
+              },
+              {
+                "fieldFilter": {
+                  "field": {"fieldPath": "locationId"},
+                  "op": "EQUAL",
+                  "value": {"stringValue": selectedLocation}
+                }
+              },
+              {
+                "fieldFilter": {
+                  "field": {"fieldPath": "bluetoothScan"},
+                  "op": "IS_NOT_NULL"
+                }
+              },
+              {
+                "fieldFilter": {
+                  "field": {"fieldPath": "dateTime"},
+                  "op": "GREATER_THAN",
+                  "value": {
+                    "timestampValue": Timestamp.fromDate(
+                        DateTime.now().subtract(const Duration(hours: 2)))
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "orderBy": [
+          {
+            "field": {"fieldPath": "dateTime"},
+            "direction": "DESCENDING"
+          }
+        ]
+      }
+    };
+  }
 }
+

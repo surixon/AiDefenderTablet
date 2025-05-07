@@ -23,6 +23,7 @@ import '../globals.dart';
 import 'package:network_tools/network_tools.dart';
 import '../locator.dart';
 import '../models/device_model.dart';
+import '../models/location.dart';
 import '../notifications/send_notification.dart';
 import '../services/fetch_data_expection.dart';
 
@@ -58,7 +59,7 @@ class DashboardProvider extends BaseProvider {
   bool btScan = true;
   bool wifiScan = true;
 
-  List<QueryDocumentSnapshot<Map<String, dynamic>>?> locationList = [];
+  List<Location> locationList = [];
 
   String? selectedLocation;
 
@@ -304,7 +305,8 @@ class DashboardProvider extends BaseProvider {
     }
 
     if (btScan) {
-      checkIsBluetoothDeviceWithIn3Feet();
+      //checkIsBluetoothDeviceWithIn3Feet();
+      checkLast2HoursActiveDevice();
     }
 
     timer = Timer.periodic(const Duration(hours: 1), (timer) async {
@@ -332,7 +334,8 @@ class DashboardProvider extends BaseProvider {
         }
 
         if (btScan) {
-          checkIsBluetoothDeviceWithIn3Feet();
+          // checkIsBluetoothDeviceWithIn3Feet();
+          checkLast2HoursActiveDevice();
         }
       });
     });
@@ -381,9 +384,35 @@ class DashboardProvider extends BaseProvider {
   Future<void> getLocationName() async {
     String deviceId = await CommonFunction.getDeviceId();
 
-    debugPrint("USERID ${SharedPref.prefs?.getString(SharedPref.userId)}");
+    try {
+      var data = await api.getLocation(Globals.getLocationByUserIdQuery(
+          SharedPref.prefs?.getString(SharedPref.userId) ?? ''));
 
-    await Globals.locationReference
+      if (data.isNotEmpty) {
+        List<Location> list = parseLocations(data);
+        locationList.clear();
+        locationList.addAll(list);
+
+        var selectedData = locationList
+            .where(
+                (e) => (e.deviceIds != null && e.deviceIds!.contains(deviceId)))
+            .toList();
+        if (selectedData.isNotEmpty) {
+          selectedLocation = selectedData.first.id;
+        }
+      } else {
+        selectedLocation = null;
+        if (isScanning) {
+          stopCron();
+        }
+      }
+    } on FetchDataException catch (e) {
+      ToastHelper.showErrorMessage('$e');
+    } on SocketException catch (e) {
+      ToastHelper.showErrorMessage('$e');
+    }
+
+    /*await Globals.locationReference
         .where('userId',
             isEqualTo: SharedPref.prefs?.getString(SharedPref.userId))
         .get()
@@ -405,7 +434,7 @@ class DashboardProvider extends BaseProvider {
           stopCron();
         }
       }
-    });
+    });*/
 
     loader = false;
   }
@@ -440,7 +469,31 @@ class DashboardProvider extends BaseProvider {
   }
 
   Future<void> getUserDetails() async {
-    await Globals.userReference
+    try {
+      await api
+          .getUserData(SharedPref.prefs?.getString(SharedPref.userId) ?? '')
+          .then((value) async {
+        if (value != null) {
+          hideNotification = value.hideNotification ?? [];
+          fcmToken = value.fcmToken ?? '';
+          emailId = value.email ?? '';
+
+          notifyNewDevice = value.notifyNewDevice ?? false;
+          notifySuspiciousDevice = value.notifySuspiciousDevice ?? false;
+          notifyRemoteDevice = value.notifyRemoteDevice ?? false;
+          emailNotification = value.emailNotification ?? false;
+
+          btScan = value.scanBluetooth ?? false;
+          wifiScan = value.scanWifi ?? false;
+        }
+      });
+    } on FetchDataException catch (e) {
+      ToastHelper.showErrorMessage('$e');
+    } on SocketException catch (e) {
+      ToastHelper.showErrorMessage('$e');
+    }
+
+    /* await Globals.userReference
         .doc(SharedPref.prefs?.getString(SharedPref.userId))
         .get()
         .then((value) {
@@ -460,7 +513,7 @@ class DashboardProvider extends BaseProvider {
         btScan = userDetails['scanSettings']['bluetooth'];
         wifiScan = userDetails['scanSettings']['wifi'];
       }
-    });
+    });*/
   }
 
   Future<void> startScanning(BuildContext context) async {
@@ -575,61 +628,7 @@ class DashboardProvider extends BaseProvider {
   Future<void> checkLast2HoursActiveDevice() async {
     List<String> deviceWithIn3Feet = [];
 
-    final Map<String, dynamic> body = {
-      "structuredQuery": {
-        "from": [
-          {"collectionId": ApiConstants.scanCollection}
-        ],
-        "where": {
-          "compositeFilter": {
-            "op": "AND",
-            "filters": [
-              {
-                "fieldFilter": {
-                  "field": {"fieldPath": "uid"},
-                  "op": "EQUAL",
-                  "value": {
-                    "stringValue":
-                        SharedPref.prefs?.getString(SharedPref.userId)
-                  }
-                }
-              },
-              {
-                "fieldFilter": {
-                  "field": {"fieldPath": "locationId"},
-                  "op": "EQUAL",
-                  "value": {"stringValue": selectedLocation}
-                }
-              },
-              {
-                "fieldFilter": {
-                  "field": {"fieldPath": "bluetoothScan"},
-                  "op": "IS_NOT_NULL"
-                }
-              },
-              {
-                "fieldFilter": {
-                  "field": {"fieldPath": "dateTime"},
-                  "op": "GREATER_THAN",
-                  "value": {
-                    "timestampValue": Timestamp.fromDate(
-                        DateTime.now().subtract(const Duration(hours: 2)))
-                  }
-                }
-              }
-            ]
-          }
-        },
-        "orderBy": [
-          {
-            "field": {"fieldPath": "dateTime"},
-            "direction": "DESCENDING"
-          }
-        ]
-      }
-    };
-
-    api.getScanData(body);
+    api.getScanData(Globals.getActiveBluetoothDevices(selectedLocation ?? ''));
   }
 
   double calculateDistance(int rssi,

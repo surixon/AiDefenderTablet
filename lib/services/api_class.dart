@@ -111,7 +111,7 @@ $htmlContent
       var response = await dio.get(
           "${ApiConstants.firebaseBaseUrl}/${ApiConstants.usersCollection}/$id");
 
-      return UserModel.fromSnapshot(json.decode(response.toString()));
+      return UserModel.fromFirestore(json.decode(response.toString()));
     } on DioException catch (e) {
       if (e.response != null) {
         throw FetchDataException('');

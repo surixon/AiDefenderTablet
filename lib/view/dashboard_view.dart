@@ -192,12 +192,11 @@ class DashboardViewState extends State<DashboardView>
                                         labelText: 'Select a Location',
                                         border: OutlineInputBorder(),
                                       ),
-                                      items:
-                                          provider.locationList.map((data) {
+                                      items: provider.locationList.map((data) {
                                         return DropdownMenuItem(
-                                          value: data?.id,
+                                          value: data.id,
                                           child: Text(
-                                            data?.data()['locationName'],
+                                            data.locationName,
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                         );
@@ -205,34 +204,28 @@ class DashboardViewState extends State<DashboardView>
                                       onChanged: provider.isScanning
                                           ? null
                                           : (dynamic value) {
-                                              provider.selectedLocation =
-                                                  value;
+                                              provider.selectedLocation = value;
                                             })
-                                  : Globals.firebaseUser?.uid != null
-                                      ? TextButton(
-                                          onPressed: () {
-                                            context
-                                                .pushNamed(
-                                                    AppPaths.addLocationView)
-                                                .then((id) async {
-                                              await provider
-                                                  .getLocationName()
-                                                  .then((__) {
-                                                if (id != null) {
-                                                  provider.selectedLocation =
-                                                      id.toString();
-                                                }
-                                              });
-                                            });
-                                          },
-                                          child: Text('ADD LOCATION',
-                                              style: ViewDecoration
-                                                  .textStyleSemiBold(
-                                                      kColor0294EA,
-                                                      22,
-                                                      true)),
-                                        )
-                                      : const SizedBox(),
+                                  : TextButton(
+                                      onPressed: () {
+                                        context
+                                            .pushNamed(AppPaths.addLocationView)
+                                            .then((id) async {
+                                          await provider
+                                              .getLocationName()
+                                              .then((__) {
+                                            if (id != null) {
+                                              provider.selectedLocation =
+                                                  id.toString();
+                                            }
+                                          });
+                                        });
+                                      },
+                                      child: Text('ADD LOCATION',
+                                          style:
+                                              ViewDecoration.textStyleSemiBold(
+                                                  kColor0294EA, 22, true)),
+                                    ),
                               SizedBox(
                                 height: 12.h,
                               ),

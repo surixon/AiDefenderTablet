@@ -14,12 +14,7 @@ class SettingsProvider extends BaseProvider {
   List<String> list = [];
 
   loadOptionList() {
-    if (Globals.auth.currentUser != null) {
-      list = ["Location", 'Bluetooth', 'WiFi', 'Logout'];
-    } else {
-      //list = ['Bluetooth', 'WiFi', 'Logout'];
-      list = ["Location", 'Bluetooth', 'WiFi', 'Logout'];
-    }
+    list = ["Location", 'Bluetooth', 'WiFi', 'Logout'];
   }
 
   void logout(BuildContext context) {
@@ -32,37 +27,10 @@ class SettingsProvider extends BaseProvider {
               ),
             )).then((value) async {
       if (value != null && value) {
-        Globals.auth.signOut();
         SharedPref.prefs?.clear();
-        context.go(AppPaths.wifi);
+        context.go(AppPaths.login);
       }
     });
-  }
-
-  void showDelete(BuildContext context) {
-    showDialog(
-        context: context,
-        builder: (_) => BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-              child: const CommonDialog(
-                description: "Are you sure you want delete account?",
-              ),
-            )).then((value) async {
-      if (value != null && value) {
-        await deleteAccount().then((value) {
-          SharedPref.prefs?.clear();
-          context.go(AppPaths.login);
-        });
-      }
-    });
-  }
-
-  Future<void> deleteAccount() async {
-    Map<String, dynamic> data = {'isDeleted': true};
-    await Globals.userReference.doc(SharedPref.prefs?.getString(SharedPref.userId)).update(data);
-    await Globals.deletedUserReference
-        .doc(SharedPref.prefs?.getString(SharedPref.userId))
-        .set({"deletedAt": DateTime.now()});
   }
 
   Future<void> copyIdToClipboard() async {

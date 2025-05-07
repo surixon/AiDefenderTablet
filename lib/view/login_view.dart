@@ -26,7 +26,7 @@ class LoginView extends StatefulWidget {
 
 class LoginViewState extends State<LoginView> {
   final _phoneController = TextEditingController();
-  final _companyIdController = TextEditingController(text: "net9CNjI9JglVepBmnby9u4h10q1");
+  final _companyIdController = TextEditingController(text: "CsejjKrnY1dkKjxOMQ6rBGYkJvp1");
 
   @override
   Widget build(BuildContext context) {

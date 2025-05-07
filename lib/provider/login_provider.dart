@@ -1,8 +1,6 @@
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:ai_defender_tablet/provider/base_provider.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -11,10 +9,8 @@ import '../enums/viewstate.dart';
 import '../globals.dart';
 import '../helpers/shared_pref.dart';
 import '../helpers/toast_helper.dart';
-import '../models/user_model.dart';
 import '../routes.dart';
 import '../services/fetch_data_expection.dart';
-import '../view/account_reinstate_view.dart';
 
 class LoginProvider extends BaseProvider {
   bool _loginLoader = false;
@@ -107,20 +103,9 @@ class LoginProvider extends BaseProvider {
       var model = await api.getUserData(companyId);
       loginLoader = false;
       if (model != null) {
-        if (model.isDeleted != null && model.isDeleted!) {
-          setState(ViewState.idle);
-          context.pop();
-          showDialog(
-              context: Globals.navigatorKey.currentContext!,
-              builder: (_) => BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-                    child: AccountReInstateView(model),
-                  ));
-        } else {
-          SharedPref.prefs?.setBool(SharedPref.isLoggedIn, true);
-          SharedPref.prefs?.setString(SharedPref.userId, companyId);
-          context.go(AppPaths.download);
-        }
+        SharedPref.prefs?.setBool(SharedPref.isLoggedIn, true);
+        SharedPref.prefs?.setString(SharedPref.userId, companyId);
+        context.go(AppPaths.download);
       } else {
         ToastHelper.showErrorMessage('Company Id Not Exist.');
       }

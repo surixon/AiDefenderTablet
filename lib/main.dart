@@ -33,14 +33,12 @@ Future<void> main() async {
   final appDocDirectory = await getApplicationDocumentsDirectory();
   await configureNetworkTools(appDocDirectory.path, enableDebugging: true);
 
-
-    await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform);
+  //await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   await EasyLocalization.ensureInitialized();
   SharedPref.prefs = await SharedPreferences.getInstance();
 
-  FlutterBluePlus.setLogLevel(LogLevel.verbose, color:false);
+  FlutterBluePlus.setLogLevel(LogLevel.verbose, color: false);
 
   DartPingIOS.register();
 
