@@ -57,6 +57,7 @@ class DashboardViewState extends State<DashboardView>
     return BaseView<DashboardProvider>(
       onModelReady: (provider) async {
         _provider = provider;
+        provider.checkIsBluetoothSupported();
         provider.loadJson().then((_) async {
           await provider.getLocationName().then((_) async {
             if (provider.selectedLocation != null) {

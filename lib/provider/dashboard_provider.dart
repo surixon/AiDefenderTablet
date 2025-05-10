@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
-import 'package:ai_defender_tablet/constants/api_constants.dart';
 import 'package:ai_defender_tablet/enums/viewstate.dart';
 import 'package:ai_defender_tablet/helpers/common_function.dart';
 import 'package:ai_defender_tablet/helpers/shared_pref.dart';
@@ -28,6 +27,8 @@ import '../notifications/send_notification.dart';
 import '../services/fetch_data_expection.dart';
 
 class DashboardProvider extends BaseProvider {
+  bool isBluetoothSupported = false;
+
   bool _loader = true;
 
   bool get loader => _loader;
@@ -139,15 +140,6 @@ class DashboardProvider extends BaseProvider {
     });
 
     setState(ViewState.idle);
-  }
-
-  Future<void> startWifiScanning(BuildContext context) async {
-    try {
-      ChannelConstants.platform.invokeMethod('startScan',
-          {'uid': SharedPref.prefs?.getString(SharedPref.userId) ?? ''});
-    } on PlatformException catch (e) {
-      debugPrint(e.message);
-    }
   }
 
   Future<String?> getMacAddressFromIpAddress(String ipAddress) async {
@@ -283,7 +275,8 @@ class DashboardProvider extends BaseProvider {
     var bluetoothAdapterState = await FlutterBluePlus.adapterState.first;
     if (btScan &&
         !wifiScan &&
-        bluetoothAdapterState == BluetoothAdapterState.on) {
+        bluetoothAdapterState == BluetoothAdapterState.on &&
+        isBluetoothSupported) {
       await startBluetoothScan().then((_) async {
         await uploadData();
       });
@@ -297,11 +290,17 @@ class DashboardProvider extends BaseProvider {
     }
 
     if (btScan && wifiScan) {
-      await startBluetoothScan().then((_) async {
+      if (isBluetoothSupported) {
+        await startBluetoothScan().then((_) async {
+          await startWifiScan().then((_) async {
+            await uploadData();
+          });
+        });
+      } else {
         await startWifiScan().then((_) async {
           await uploadData();
         });
-      });
+      }
     }
 
     if (btScan) {
@@ -313,7 +312,8 @@ class DashboardProvider extends BaseProvider {
       await getUserDetails().then((_) async {
         if (btScan &&
             !wifiScan &&
-            bluetoothAdapterState == BluetoothAdapterState.on) {
+            bluetoothAdapterState == BluetoothAdapterState.on &&
+            isBluetoothSupported) {
           await startBluetoothScan().then((_) async {
             await uploadData();
           });
@@ -326,11 +326,17 @@ class DashboardProvider extends BaseProvider {
         }
 
         if (btScan && wifiScan) {
-          await startBluetoothScan().then((_) async {
+          if (isBluetoothSupported) {
+            await startBluetoothScan().then((_) async {
+              await startWifiScan().then((_) async {
+                await uploadData();
+              });
+            });
+          } else {
             await startWifiScan().then((_) async {
               await uploadData();
             });
-          });
+          }
         }
 
         if (btScan) {
@@ -525,7 +531,7 @@ class DashboardProvider extends BaseProvider {
       await getUserDetails().then((_) async {
         //if (btScan) {
         final bluetoothAdapterState = await FlutterBluePlus.adapterState.first;
-        if (await FlutterBluePlus.isSupported &&
+        if (isBluetoothSupported &&
             bluetoothAdapterState != BluetoothAdapterState.on) {
           await showBluetoothDialog(context);
         }
@@ -699,5 +705,9 @@ class DashboardProvider extends BaseProvider {
     } else {
       throw UnsupportedError('Unsupported data type: ${data.runtimeType}');
     }
+  }
+
+  Future<void> checkIsBluetoothSupported() async {
+    isBluetoothSupported = await FlutterBluePlus.isSupported;
   }
 }

@@ -65,7 +65,7 @@ dependencies:
   qr_flutter: ^4.1.0
   wakelock_plus: ^1.2.10
   flutter_animate: ^4.5.0
-  flutter_blue_plus:
+  flutter_blue_plus: ^1.35.5
   #geolocator:
   permission_handler:
   device_info_plus: ^11.2.0
