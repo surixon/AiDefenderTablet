@@ -294,8 +294,7 @@ class DashboardViewState extends State<DashboardView>
                                         await provider
                                             .updateLocation()
                                             .then((_) async {
-                                        //  await provider.startScanning(context);
-                                          provider.checkLast2HoursActiveDevice();
+                                          await provider.startScanning(context);
                                         });
                                       } else {
                                         ToastHelper.showErrorMessage(
