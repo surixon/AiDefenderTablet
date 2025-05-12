@@ -1,13 +1,10 @@
-import 'dart:io';
 
 import 'package:ai_defender_tablet/provider/loading_provider.dart';
 import 'package:ai_defender_tablet/provider/theme_provider.dart';
 import 'package:ai_defender_tablet/routes.dart';
 import 'package:ai_defender_tablet/theme/theme_color.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:dart_ping_ios/dart_ping_ios.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -19,7 +16,6 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'constants/dimensions_constants.dart';
 import 'constants/string_constants.dart';
-import 'firebase_options.dart';
 import 'globals.dart';
 import 'helpers/custom_scroll_behavior.dart';
 import 'helpers/shared_pref.dart';
@@ -32,8 +28,6 @@ Future<void> main() async {
 
   final appDocDirectory = await getApplicationDocumentsDirectory();
   await configureNetworkTools(appDocDirectory.path, enableDebugging: true);
-
-  //await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   await EasyLocalization.ensureInitialized();
   SharedPref.prefs = await SharedPreferences.getInstance();

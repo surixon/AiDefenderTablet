@@ -7,17 +7,16 @@ import 'package:ai_defender_tablet/helpers/common_function.dart';
 import 'package:ai_defender_tablet/helpers/shared_pref.dart';
 import 'package:ai_defender_tablet/helpers/toast_helper.dart';
 import 'package:ai_defender_tablet/models/ai_defender_model.dart';
+import 'package:ai_defender_tablet/models/scan_model.dart';
 import 'package:ai_defender_tablet/provider/base_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cron/cron.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:lan_scanner/lan_scanner.dart';
 import 'package:network_info_plus/network_info_plus.dart';
-import '../constants/channel_constants.dart';
 import '../globals.dart';
 import 'package:network_tools/network_tools.dart';
 import '../locator.dart';
@@ -81,15 +80,41 @@ class DashboardProvider extends BaseProvider {
     await api.updateLocation(
         selectedLocation!, Globals.updateLastAndNextScan(lastScan!, nextScan!));
 
+    final info = NetworkInfo();
+    final ip = await info.getWifiIP();
+    if (ip == null) {
+      debugPrint('Could not get WiFi IP');
+      return;
+    }
+
     final scanner = LanScanner(debugLogging: true);
     final hosts = await scanner.quickIcmpScanAsync(
-      ipToCSubnet(await NetworkInfo().getWifiIP() ?? ''),
+      ipToCSubnet(ip),
     );
     _devices.clear();
     _hosts.clear();
     _hosts.addAll(hosts);
 
+    // Parse ARP table into a map of IP -> MAC
+    final macMap = <String, String>{};
+
+    if (Platform.isLinux) {
+      // Fetch ARP table
+      final arpResult = await Process.run('arp', ['-a']);
+      final arpOutput = arpResult.stdout as String;
+
+      await Future.forEach(arpOutput.split('\n'), (line) {
+        final match = RegExp(r'\((.*?)\) at ([0-9a-f:]+)').firstMatch(line);
+        if (match != null) {
+          macMap[match.group(1)!] = match.group(2)!;
+        }
+      });
+    }
+
     await Future.forEach(_hosts, (element) async {
+      //Match scanned hosts with MAC addresses
+      final String mac = macMap[element.internetAddress.address] ?? '';
+
       bool isOpen80 = (await PortScannerService.instance
               .isOpen(element.internetAddress.address, 80)) !=
           null;
@@ -130,52 +155,11 @@ class DashboardProvider extends BaseProvider {
             fcmToken);
       }
 
-      var macAddress =
-          await getMacAddressFromIpAddress(element.internetAddress.host);
-
       List<int> ports = [isOpen80 ? 80 : 0, isOpen554 ? 554 : 0];
-
-      _devices
-          .add(DeviceModel(element.internetAddress.address, ports, macAddress));
+      _devices.add(DeviceModel(element.internetAddress.address, ports, mac));
     });
 
     setState(ViewState.idle);
-  }
-
-  Future<String?> getMacAddressFromIpAddress(String ipAddress) async {
-    try {
-      return await ChannelConstants.platform
-          .invokeMethod('getMacAddressFromIpAddress', ipAddress);
-    } on PlatformException catch (e) {
-      return "Error: ${e.message}";
-    }
-  }
-
-  Future<String> getMac(String macAddress) async {
-    setState(ViewState.busy);
-    try {
-      if (macAddress.isEmpty) {
-        setState(ViewState.idle);
-        return '';
-      } else {
-        var model = await api.getMacAddress(macAddress);
-        setState(ViewState.idle);
-        return model;
-      }
-      /* if (model.success != null) {
-        setState(ViewState.idle);
-        return model;
-      } else {
-        setState(ViewState.idle);
-        return null;
-      }*/
-    } on FetchDataException catch (e) {
-      setState(ViewState.idle);
-      return '';
-    } on SocketException catch (e) {
-      setState(ViewState.idle);
-      return '';
-    }
   }
 
   Future<void> uploadData() async {
@@ -190,12 +174,9 @@ class DashboardProvider extends BaseProvider {
     await Future.forEach(_devices, (element) async {
       String? brand;
       if (element.macAddress != null && element.macAddress!.length > 7) {
-        //macAddress = await getMac(element.macAddress!);
-        //debugPrint("Response $macAddress");
         String macPrefix = element.macAddress!.replaceAll(RegExp(r'[:\-]'), "");
         brand = prefixes?[macPrefix.substring(0, 6).toUpperCase()];
       }
-
       scanList.add({
         'ports': element.ports,
         'ip': element.ip,
@@ -245,31 +226,17 @@ class DashboardProvider extends BaseProvider {
       'scan': scanList,
       'locationId': selectedLocation,
       'bluetoothScan': bluetoothScanList,
-      'dateOnly':
-          CommonFunction.getDateFromTimeStamp(DateTime.now(), 'yyyyMMdd')
+      'dateOnly': CommonFunction.getDateFromTimeStamp(
+          DateTime.now().toUtc(), 'yyyyMMdd')
     };
-    //await Globals.scanReference.doc().set(request);
 
-    debugPrint("REQUEST $request");
-
-    final Map<String, dynamic> firestorePayload = {
+    final Map<String, dynamic> fireStorePayload = {
       'fields':
-          request.map((key, value) => MapEntry(key, toFirestoreFields(value))),
+          request.map((key, value) => MapEntry(key, toFireStoreFields(value))),
     };
 
-    await api.postScanData(firestorePayload);
+    await api.postScanData(fireStorePayload);
   }
-
-  /*Future<void> updateWifiName() async {
-    await NetworkInfo().getWifiName().then((wifiName) async {
-      debugPrint("Wifi Name $wifiName");
-      debugPrint("User ID ${SharedPref.prefs?.getString(SharedPref.userId)}");
-      await Globals.userReference
-          .doc(SharedPref.prefs?.getString(SharedPref.userId))
-          .update({'wifiName': wifiName});
-      debugPrint("Date Uploaded ${SharedPref.prefs?.getString(SharedPref.userId)}");
-    });
-  }*/
 
   startCron() async {
     var bluetoothAdapterState = await FlutterBluePlus.adapterState.first;
@@ -304,7 +271,6 @@ class DashboardProvider extends BaseProvider {
     }
 
     if (btScan) {
-      //checkIsBluetoothDeviceWithIn3Feet();
       checkLast2HoursActiveDevice();
     }
 
@@ -340,7 +306,6 @@ class DashboardProvider extends BaseProvider {
         }
 
         if (btScan) {
-          // checkIsBluetoothDeviceWithIn3Feet();
           checkLast2HoursActiveDevice();
         }
       });
@@ -418,30 +383,6 @@ class DashboardProvider extends BaseProvider {
       ToastHelper.showErrorMessage('$e');
     }
 
-    /*await Globals.locationReference
-        .where('userId',
-            isEqualTo: SharedPref.prefs?.getString(SharedPref.userId))
-        .get()
-        .then((snapshot) {
-      if (snapshot.docs.isNotEmpty) {
-        locationList.clear();
-        locationList.addAll(snapshot.docs);
-
-        var selectedData = locationList
-            .where((e) => (e?.data()['deviceIds'] != null &&
-                e?.data()['deviceIds'].contains(deviceId)))
-            .toList();
-        if (selectedData.isNotEmpty) {
-          selectedLocation = selectedData.first?.id;
-        }
-      } else {
-        selectedLocation = null;
-        if (isScanning) {
-          stopCron();
-        }
-      }
-    });*/
-
     loader = false;
   }
 
@@ -498,28 +439,6 @@ class DashboardProvider extends BaseProvider {
     } on SocketException catch (e) {
       ToastHelper.showErrorMessage('$e');
     }
-
-    /* await Globals.userReference
-        .doc(SharedPref.prefs?.getString(SharedPref.userId))
-        .get()
-        .then((value) {
-      Map<String, dynamic>? userDetails = value.data() as Map<String, dynamic>;
-
-      hideNotification = userDetails['hideNotification'] ?? [];
-      fcmToken = userDetails['fcm'] ?? '';
-      emailId = userDetails['email'] ?? '';
-
-      if (userDetails['notify'] != null) {
-        notifyNewDevice = userDetails['notify']['newDevice'];
-        notifySuspiciousDevice = userDetails['notify']['suspicious'];
-        notifyRemoteDevice = userDetails['notify']['remote'];
-        emailNotification = userDetails['notify']['emailNotification'] ?? false;
-      }
-      if (userDetails['scanSettings'] != null) {
-        btScan = userDetails['scanSettings']['bluetooth'];
-        wifiScan = userDetails['scanSettings']['wifi'];
-      }
-    });*/
   }
 
   Future<void> startScanning(BuildContext context) async {
@@ -570,80 +489,49 @@ class DashboardProvider extends BaseProvider {
     );
   }
 
-  Future<void> checkIsBluetoothDeviceWithIn3Feet() async {
-    List<String> deviceWithIn3Feet = [];
-    await Globals.scanReference
-        .where('uid', isEqualTo: SharedPref.prefs?.getString(SharedPref.userId))
-        .where('locationId', isEqualTo: selectedLocation)
-        .where('bluetoothScan', isNotEqualTo: null)
-        .where('dateTime',
-            isGreaterThan: Timestamp.fromDate(
-                DateTime.now().subtract(const Duration(hours: 2))))
-        .orderBy('dateTime', descending: true)
-        .get()
-        .then((snapshot) async {
-      debugPrint("snapshot length ${snapshot.docs.length}");
+  Future<void> checkLast2HoursActiveDevice() async {
+    List<String> activeDevice = [];
 
-      /* if (snapshot.docs.length < 6) {
-        return;
-      }*/
+    var data = await api
+        .getScanData(Globals.getActiveBluetoothDevices(selectedLocation ?? ''));
+    var filterList = data.where((e) => e.bluetoothScan.isNotEmpty);
 
-      if (snapshot.docs.length < 2) {
-        return;
-      }
+    if (filterList.length < 2) {
+      return;
+    }
 
-      await Future.forEach(snapshot.docs, (doc) async {
-        List<String> devices = [];
-        await Future.forEach(doc.data()["bluetoothScan"], (dynamic device) {
-          /* double distanceInFeet = calculateDistance(device['rssi'],
-              txPower: -59, pathLossExponent: 2.5);
-          if (distanceInFeet <= 3.0) {
-            devices.add(device['name']);
-          }*/
-          devices.add(device['name']);
-        });
-
-        deviceWithIn3Feet.addAll(devices);
-
-        /* if (deviceWithIn3Feet.isEmpty) {
-          deviceWithIn3Feet.addAll(devices);
-        } else {
-          deviceWithIn3Feet.retainWhere((item) => devices.contains(item));
-          debugPrint("Updated List deviceWithIn3Feet: $deviceWithIn3Feet");
-        }*/
+    await Future.forEach(filterList, (doc) async {
+      List<String> devices = [];
+      await Future.forEach(doc.bluetoothScan, (BluetoothScan device) {
+        devices.add(device.name);
       });
 
-      deviceWithIn3Feet.retainWhere((item) => !hideNotification.contains(item));
+      activeDevice.addAll(devices);
 
-      if (deviceWithIn3Feet.isNotEmpty) {
-        List<String> btDevices = [];
-
-        await Future.forEach(deviceWithIn3Feet, (macAddress) {
-          String macPrefix = macAddress.replaceAll(RegExp(r'[:\-]'), "");
-          btDevices.add(
-              prefixes?[macPrefix.substring(0, 6).toUpperCase()] ?? macAddress);
-        });
-
-        await sendNotification.sendNotification('bt_device', 'Ai Defender',
-            "BT $deviceWithIn3Feet in range more than 2 hours", fcmToken);
-        await sendEmail(deviceWithIn3Feet);
+      if (activeDevice.isEmpty) {
+        activeDevice.addAll(devices);
+      } else {
+        activeDevice.retainWhere((item) => devices.contains(item));
+        debugPrint("Updated List deviceWithIn3Feet: $activeDevice");
       }
     });
-  }
 
-  Future<void> checkLast2HoursActiveDevice() async {
-    List<String> deviceWithIn3Feet = [];
+    activeDevice.retainWhere((item) => !hideNotification.contains(item));
 
-    api.getScanData(Globals.getActiveBluetoothDevices(selectedLocation ?? ''));
-  }
+    if (activeDevice.isNotEmpty) {
+      List<String> btDevices = [];
 
-  double calculateDistance(int rssi,
-      {double txPower = -59, double pathLossExponent = 2.0}) {
-    // txPower: RSSI at 1 meter (default is -59)
-    // pathLossExponent: Environmental factor (default is 2.0 for free space)
-    double distanceInMeters =
-        pow(10, (txPower - rssi) / (10 * pathLossExponent)).toDouble();
-    return distanceInMeters * 3.28084; // Convert meters to feet
+      await Future.forEach(activeDevice, (macAddress) {
+        String macPrefix = macAddress.replaceAll(RegExp(r'[:\-]'), "");
+        btDevices.add(
+            prefixes?[macPrefix.substring(0, 6).toUpperCase()] ?? macAddress);
+      });
+
+      await sendNotification.sendNotification('bt_device', 'Ai Defender',
+          "BT $activeDevice in range more than 2 hours", fcmToken);
+
+      await sendEmail(activeDevice);
+    }
   }
 
   String _getDeviceName(List<int> ports) {
@@ -675,7 +563,7 @@ class DashboardProvider extends BaseProvider {
     }
   }
 
-  Map<String, dynamic> toFirestoreFields(dynamic data) {
+  Map<String, dynamic> toFireStoreFields(dynamic data) {
     if (data == null) {
       return {'nullValue': null};
     } else if (data is String) {
@@ -687,18 +575,18 @@ class DashboardProvider extends BaseProvider {
     } else if (data is bool) {
       return {'booleanValue': data};
     } else if (data is DateTime) {
-      return {'timestampValue': data.toUtc().toIso8601String()};
+      return {'stringValue': data.toUtc().toIso8601String()};
     } else if (data is List) {
       return {
         'arrayValue': {
-          'values': data.map((item) => toFirestoreFields(item)).toList(),
+          'values': data.map((item) => toFireStoreFields(item)).toList(),
         }
       };
     } else if (data is Map<String, dynamic>) {
       return {
         'mapValue': {
           'fields': data.map(
-            (key, value) => MapEntry(key, toFirestoreFields(value)),
+            (key, value) => MapEntry(key, toFireStoreFields(value)),
           )
         }
       };

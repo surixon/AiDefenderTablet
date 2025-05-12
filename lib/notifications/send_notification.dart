@@ -18,20 +18,11 @@ class SendNotification {
     String message,
     String fcmToken,
   ) async {
-   /* var userId = SharedPref.prefs?.getString(SharedPref.userId);
-    var id = Globals.notificationsReference
-        .doc(userId)
-        .collection('notification')
-        .doc()
-        .id;*/
-    //addNotificationInDB(id,userId, type, title, message);
     try {
       Map<String, dynamic> data = {
         "title": title,
         "body": message,
         "data": {
-         /* 'id': id,
-          'userId': userId,*/
           'title': title,
           'body': message,
           'type': type,
@@ -58,7 +49,7 @@ class SendNotification {
         "token": fcmToken
       };
 
-      debugPrint("Request  ${data}");
+      debugPrint("Request  $data");
 
       dio.options.headers['content-Type'] = 'application/json';
       var response = await dio.post(ApiConstants.sendNotification, data: data);
@@ -66,27 +57,5 @@ class SendNotification {
     } on DioException catch (e) {
       debugPrint("Error Status Code ${e.response?.statusCode}");
     }
-  }
-
-  Future<void> addNotificationInDB(
-    String? id,
-    String? userID,
-    String type,
-    String title,
-    String message,
-  ) async {
-    NotificationModel notificationModel = NotificationModel();
-    notificationModel.id = id;
-    notificationModel.userId = userID;
-    notificationModel.title = title;
-    notificationModel.message = message;
-    notificationModel.type = type;
-    notificationModel.isRead = false;
-    notificationModel.timestamp = Timestamp.now();
-    await Globals.notificationsReference
-        .doc(userID)
-        .collection('notification')
-        .doc(id)
-        .set(notificationModel.toMap(notificationModel));
   }
 }

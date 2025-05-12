@@ -6,6 +6,7 @@ import 'package:flutter/cupertino.dart';
 import '../constants/api_constants.dart';
 import '../locator.dart';
 import '../models/mac_address_model.dart';
+import '../models/scan_model.dart';
 import 'fetch_data_expection.dart';
 
 class Api {
@@ -121,11 +122,13 @@ $htmlContent
     }
   }
 
-  Future<List<dynamic>> getScanData(Map<String, dynamic> body) async {
+  Future< List<ScanModel>> getScanData(Map<String, dynamic> body) async {
     try {
       dio.options.headers["Accept"] = ApiConstants.applicationJson;
-      var response = await dio.get("${ApiConstants.firebaseBaseUrl}:runQuery");
-      return json.decode(response.data);
+      dio.options.headers["Content-Type"] = ApiConstants.applicationJson;
+      var response = await dio.post("${ApiConstants.firebaseBaseUrl}:runQuery",
+      data: body);
+      return  parseScanDocuments(json.encode(response.data));
     } on DioException catch (e) {
       if (e.response != null) {
         throw FetchDataException('');
@@ -311,6 +314,20 @@ $htmlContent
           };
         })
         .where((map) => map.isNotEmpty) // Filter out empty maps
+        .toList();
+  }
+
+  List<ScanModel> parseScanDocuments(String responseBody) {
+    final List<dynamic> docs = json.decode(responseBody);
+    // Check if the documents list is empty or contains invalid data
+    if (docs.isEmpty) {
+      print('No scan documents found.');
+      return [];
+    }
+
+    return docs
+        .where((e) => e['document'] != null) // Only process documents with valid data
+        .map((e) => ScanModel.fromFirestore(e['document']))
         .toList();
   }
 }

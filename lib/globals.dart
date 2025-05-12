@@ -142,44 +142,30 @@ class Globals {
       String selectedLocation) {
     return {
       "structuredQuery": {
-        "from": [
-          {"collectionId": ApiConstants.scanCollection}
-        ],
+        "from": [{ "collectionId": "scan" }],
         "where": {
           "compositeFilter": {
             "op": "AND",
             "filters": [
               {
                 "fieldFilter": {
-                  "field": {"fieldPath": "uid"},
+                  "field": { "fieldPath": "uid" },
                   "op": "EQUAL",
-                  "value": {
-                    "stringValue":
-                    SharedPref.prefs?.getString(SharedPref.userId)
-                  }
+                  "value": { "stringValue": SharedPref.prefs?.getString(SharedPref.userId) }
                 }
               },
               {
                 "fieldFilter": {
-                  "field": {"fieldPath": "locationId"},
+                  "field": { "fieldPath": "locationId" },
                   "op": "EQUAL",
-                  "value": {"stringValue": selectedLocation}
+                  "value": { "stringValue": selectedLocation}
                 }
               },
               {
                 "fieldFilter": {
-                  "field": {"fieldPath": "bluetoothScan"},
-                  "op": "IS_NOT_NULL"
-                }
-              },
-              {
-                "fieldFilter": {
-                  "field": {"fieldPath": "dateTime"},
+                  "field": { "fieldPath": "dateTime" },
                   "op": "GREATER_THAN",
-                  "value": {
-                    "timestampValue": Timestamp.fromDate(
-                        DateTime.now().subtract(const Duration(hours: 2)))
-                  }
+                  "value": { "stringValue": DateTime.now().subtract(const Duration(hours: 2)).toUtc().toIso8601String() }
                 }
               }
             ]
@@ -187,7 +173,7 @@ class Globals {
         },
         "orderBy": [
           {
-            "field": {"fieldPath": "dateTime"},
+            "field": { "fieldPath": "dateTime" },
             "direction": "DESCENDING"
           }
         ]
