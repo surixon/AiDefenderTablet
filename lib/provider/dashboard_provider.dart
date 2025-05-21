@@ -122,7 +122,6 @@ class DashboardProvider extends BaseProvider {
 
       if (!hideNotification.contains(element.internetAddress.address) &&
           isOpen554 &&
-          !isOpen80 &&
           notifySuspiciousDevice) {
         await sendNotification.sendNotification(
             'suspicious_device',
