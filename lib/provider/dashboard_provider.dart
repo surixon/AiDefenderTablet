@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 import 'package:ai_defender_tablet/enums/viewstate.dart';
 import 'package:ai_defender_tablet/helpers/common_function.dart';
 import 'package:ai_defender_tablet/helpers/shared_pref.dart';
@@ -9,7 +8,6 @@ import 'package:ai_defender_tablet/helpers/toast_helper.dart';
 import 'package:ai_defender_tablet/models/ai_defender_model.dart';
 import 'package:ai_defender_tablet/models/scan_model.dart';
 import 'package:ai_defender_tablet/provider/base_provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cron/cron.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -48,7 +46,7 @@ class DashboardProvider extends BaseProvider {
   final Cron cron = Cron();
   Timer? timer;
   List<dynamic> hideNotification = [];
-  List<ScanResult> scanResults = [];
+  List<ScanResult> btScanResults = [];
 
   String fcmToken = '';
   String emailId = '';
@@ -69,7 +67,7 @@ class DashboardProvider extends BaseProvider {
 
   set isScanning(bool value) {
     _isScanning = value;
-    notifyListeners();
+    customNotify();
   }
 
   Future<void> startWifiScan() async {
@@ -135,7 +133,6 @@ class DashboardProvider extends BaseProvider {
 
       if (!hideNotification.contains(element.internetAddress.address) &&
           isOpen80 &&
-          !isOpen554 &&
           notifyRemoteDevice) {
         await sendNotification.sendNotification(
             'remote_device',
@@ -145,13 +142,13 @@ class DashboardProvider extends BaseProvider {
       }
 
       if (!hideNotification.contains(element.internetAddress.address) &&
-          isOpen80 &&
-          isOpen554 &&
-          notifyRemoteDevice) {
+          !isOpen554 &&
+          !isOpen80 &&
+          notifySuspiciousDevice) {
         await sendNotification.sendNotification(
-            'remote_device',
+            'other_device',
             'Ai Defender',
-            "Remote Accessible Device Found (${element.internetAddress.address})",
+            "Other Device Found (${element.internetAddress.address})",
             fcmToken);
       }
 
@@ -201,7 +198,7 @@ class DashboardProvider extends BaseProvider {
 
     List<dynamic> bluetoothScanList = [];
 
-    await Future.forEach(scanResults, (bluetooth) async {
+    await Future.forEach(btScanResults, (bluetooth) async {
       String macPrefix =
           bluetooth.device.remoteId.str.replaceAll(RegExp(r'[:\-]'), "");
 
@@ -250,7 +247,7 @@ class DashboardProvider extends BaseProvider {
     }
 
     if (!btScan && wifiScan) {
-      scanResults.clear();
+      btScanResults.clear();
       await startWifiScan().then((value) async {
         await uploadData();
       });
@@ -264,6 +261,7 @@ class DashboardProvider extends BaseProvider {
           });
         });
       } else {
+        btScanResults.clear();
         await startWifiScan().then((_) async {
           await uploadData();
         });
@@ -286,6 +284,7 @@ class DashboardProvider extends BaseProvider {
         }
 
         if (!btScan && wifiScan) {
+          btScanResults.clear();
           await startWifiScan().then((value) async {
             await uploadData();
           });
@@ -299,6 +298,7 @@ class DashboardProvider extends BaseProvider {
               });
             });
           } else {
+            btScanResults.clear();
             await startWifiScan().then((_) async {
               await uploadData();
             });
@@ -346,7 +346,23 @@ class DashboardProvider extends BaseProvider {
 
   Future startBluetoothScan() async {
     try {
-      await FlutterBluePlus.startScan(timeout: const Duration(seconds: 15));
+      final subscription = FlutterBluePlus.scanResults.listen((scanResult) {
+        for (var result in scanResult) {
+          // Avoid duplicates
+          if (!btScanResults.any(
+              (r) => r.device.remoteId.str == result.device.remoteId.str)) {
+            btScanResults.add(result);
+          }
+        }
+      });
+
+      await FlutterBluePlus.startScan(timeout: const Duration(seconds: 5));
+      // Wait for scan to complete
+      await Future.delayed(const Duration(seconds: 5));
+      // Stop scanning
+      await FlutterBluePlus.stopScan();
+      // Cancel the subscription
+      await subscription.cancel();
     } catch (e) {
       debugPrint("Start Scan Error: $e");
     }
@@ -448,13 +464,11 @@ class DashboardProvider extends BaseProvider {
         await InternetConnectionChecker.instance.hasConnection;
     if (isConnected) {
       await getUserDetails().then((_) async {
-        //if (btScan) {
         final bluetoothAdapterState = await FlutterBluePlus.adapterState.first;
         if (isBluetoothSupported &&
             bluetoothAdapterState != BluetoothAdapterState.on) {
           await showBluetoothDialog(context);
         }
-        // }
         await startCron();
       });
     } else {
@@ -511,26 +525,24 @@ class DashboardProvider extends BaseProvider {
       if (activeDevice.isEmpty) {
         activeDevice.addAll(devices);
       } else {
+        //The condition is: devices.contains(item) → meaning only keep item if it exists in the devices list.
         activeDevice.retainWhere((item) => devices.contains(item));
-        debugPrint("Updated List deviceWithIn3Feet: $activeDevice");
       }
     });
 
-    activeDevice.retainWhere((item) => !hideNotification.contains(item));
+    List<String> uniqueDevices = activeDevice.toSet().toList();
+    uniqueDevices.retainWhere((item) => !hideNotification.contains(item));
 
-    if (activeDevice.isNotEmpty) {
+    if (uniqueDevices.isNotEmpty) {
       List<String> btDevices = [];
-
-      await Future.forEach(activeDevice, (macAddress) {
+      await Future.forEach(uniqueDevices, (macAddress) {
         String macPrefix = macAddress.replaceAll(RegExp(r'[:\-]'), "");
         btDevices.add(
             prefixes?[macPrefix.substring(0, 6).toUpperCase()] ?? macAddress);
       });
-
       await sendNotification.sendNotification('bt_device', 'Ai Defender',
-          "BT $activeDevice in range more than 2 hours", fcmToken);
-
-      await sendEmail(activeDevice);
+          "BT $uniqueDevices in range more than 2 hours", fcmToken);
+      await sendEmail(uniqueDevices);
     }
   }
 
@@ -555,7 +567,7 @@ class DashboardProvider extends BaseProvider {
       return;
     }
     try {
-      var model = await api.sendEmail(emailId, deviceWithIn3Feet);
+      await api.sendEmail(emailId, deviceWithIn3Feet);
     } on FetchDataException catch (e) {
       debugPrint("Error $e");
     } on SocketException catch (e) {

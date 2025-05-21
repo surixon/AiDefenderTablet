@@ -32,23 +32,24 @@ class DashboardView extends StatefulWidget {
 class DashboardViewState extends State<DashboardView>
     with SingleTickerProviderStateMixin {
   DashboardProvider? _provider;
-  late StreamSubscription<List<ScanResult>> _scanResultsSubscription;
+
+  //late StreamSubscription<List<ScanResult>> _scanResultsSubscription;
 
   @override
   void initState() {
     super.initState();
     WakelockPlus.enable();
-    _scanResultsSubscription = FlutterBluePlus.scanResults.listen((results) {
+    /* _scanResultsSubscription = FlutterBluePlus.scanResults.listen((results) {
       _provider?.scanResults = results;
       debugPrint("scanResults ${_provider?.scanResults.length}");
     }, onError: (e) {
       ToastHelper.showErrorMessage("Scan Error: $e");
-    });
+    });*/
   }
 
   @override
   void dispose() {
-    _scanResultsSubscription.cancel();
+    // _scanResultsSubscription.cancel();
     super.dispose();
   }
 
