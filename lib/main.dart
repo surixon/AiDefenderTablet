@@ -1,8 +1,8 @@
-
 import 'package:ai_defender_tablet/provider/loading_provider.dart';
 import 'package:ai_defender_tablet/provider/theme_provider.dart';
 import 'package:ai_defender_tablet/routes.dart';
 import 'package:ai_defender_tablet/theme/theme_color.dart';
+import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:dart_ping_ios/dart_ping_ios.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -50,6 +50,12 @@ Future<void> main() async {
   ));
 
   setupLocator();
+
+  doWhenWindowReady(() {
+    final initialSize = appWindow.size;
+    appWindow.maximize(); // Maximizes the window
+    appWindow.show();
+  });
 }
 
 class MyApp extends StatelessWidget {
